@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 // Import components
@@ -23,6 +23,27 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import AIAssistant from './components/AIAssistant';
 
+// Import permissions
+import { canAccessRoute, getCurrentUserRole, hasPermission } from './utils/permissions';
+
+// Protected Route Component
+const ProtectedRoute = ({ children, requiredPermission }) => {
+  const location = useLocation();
+  const adminToken = localStorage.getItem('adminToken');
+  
+  // Check if user is logged in
+  if (!adminToken) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Check if user has permission for this route
+  if (requiredPermission && !hasPermission(requiredPermission)) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
+
 function App() {
   return (
     <Router>
@@ -36,20 +57,111 @@ function App() {
                 <Header />
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/categories" element={<Categories />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/packs" element={<Packs />} />
-                  <Route path="/pack-types" element={<PackTypes />} />
+                  <Route 
+                    path="/categories" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageCategories">
+                        <Categories />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/products" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageProducts">
+                        <Products />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/packs" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManagePacks">
+                        <Packs />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/pack-types" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManagePacks">
+                        <PackTypes />
+                      </ProtectedRoute>
+                    } 
+                  />
                   <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/customers" element={<Customers />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/payments" element={<Payments />} />
-                  <Route path="/deliveries" element={<Deliveries />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/reward-settings" element={<RewardSettings />} />
-                  <Route path="/deactivated-products" element={<DeactivatedProducts />} />
-                  <Route path="/users" element={<UserManagement />} />
-                  <Route path="/customer-addresses" element={<CustomerAddresses />} />
+                  <Route 
+                    path="/customers" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageCustomers">
+                        <Customers />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/orders" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageOrders">
+                        <Orders />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/payments" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManagePayments">
+                        <Payments />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/deliveries" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageDeliveries">
+                        <Deliveries />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/reports" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageReports">
+                        <Reports />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/reward-settings" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageRewardSettings">
+                        <RewardSettings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/deactivated-products" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageDeactivatedProducts">
+                        <DeactivatedProducts />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/users" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageUsers">
+                        <UserManagement />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/customer-addresses" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageAddresses">
+                        <CustomerAddresses />
+                      </ProtectedRoute>
+                    } 
+                  />
                 </Routes>
               </div>
               <AIAssistant />

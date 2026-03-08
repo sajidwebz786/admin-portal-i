@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../services/api';
+import { getCurrentUserRole } from '../utils/permissions';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -17,6 +18,10 @@ const UserManagement = () => {
     phone: '',
     isActive: true
   });
+
+  // Get current user role
+  const currentUserRole = getCurrentUserRole();
+  const isAdmin = currentUserRole === 'admin';
 
   // Admin app user roles (not customers)
   const adminRoles = ['admin', 'manager', 'staff', 'delivery'];
@@ -222,6 +227,9 @@ const UserManagement = () => {
             <i className="fas fa-info-circle"></i>
             <strong> Note:</strong> This section shows only Admin Application users (Admin, Manager, Staff, Delivery). 
             Mobile app customers are managed separately in the <a href="/customers">Customers</a> section.
+            {!isAdmin && (
+              <span><br /><strong>Note:</strong> You have view-only access. Only administrators can add, edit, or delete users.</span>
+            )}
           </div>
 
           <div className="card">
@@ -232,23 +240,25 @@ const UserManagement = () => {
                 </div>
                 <div className="col-md-6">
                   <div className="card-tools float-right">
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        setEditingUser(null);
-                        setFormData({
-                          name: '',
-                          email: '',
-                          password: '',
-                          role: 'staff',
-                          phone: '',
-                          isActive: true
-                        });
-                        setShowModal(true);
-                      }}
-                    >
-                      <i className="fas fa-plus"></i> Add New Staff
-                    </button>
+                    {isAdmin && (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                          setEditingUser(null);
+                          setFormData({
+                            name: '',
+                            email: '',
+                            password: '',
+                            role: 'staff',
+                            phone: '',
+                            isActive: true
+                          });
+                          setShowModal(true);
+                        }}
+                      >
+                        <i className="fas fa-plus"></i> Add New Staff
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -330,27 +340,34 @@ const UserManagement = () => {
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                         </td>
                         <td>
-                          <button
-                            className="btn btn-info btn-sm mr-1"
-                            onClick={() => handleEdit(user)}
-                            title="Edit"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            className={`btn btn-sm mr-1 ${user.isActive === false ? 'btn-success' : 'btn-warning'}`}
-                            onClick={() => handleToggleStatus(user)}
-                            title={user.isActive === false ? 'Activate' : 'Deactivate'}
-                          >
-                            <i className={`fas ${user.isActive === false ? 'fa-check' : 'fa-ban'}`}></i>
-                          </button>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleDelete(user.id)}
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                className="btn btn-info btn-sm mr-1"
+                                onClick={() => handleEdit(user)}
+                                title="Edit"
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className={`btn btn-sm mr-1 ${user.isActive === false ? 'btn-success' : 'btn-warning'}`}
+                                onClick={() => handleToggleStatus(user)}
+                                title={user.isActive === false ? 'Activate' : 'Deactivate'}
+                              >
+                                <i className={`fas ${user.isActive === false ? 'fa-check' : 'fa-ban'}`}></i>
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDelete(user.id)}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </>
+                          )}
+                          {!isAdmin && (
+                            <span className="text-muted">View only</span>
+                          )}
                         </td>
                       </tr>
                     ))}
