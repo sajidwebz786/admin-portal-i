@@ -68,17 +68,18 @@ const Sidebar = () => {
             <li className="nav-header text-uppercase px-3 mb-2 mt-3" style={{color: '#adb5bd', fontSize: '0.75rem', fontWeight: '600', letterSpacing: '0.5px'}}>
               Business Operations
             </li>
-            <li className="nav-item">
-              <Link to="/checkout" className={`nav-link ${isActive('/checkout')}`}>
-                <i className="nav-icon fas fa-shopping-cart"></i>
-                <p>Cart</p>
-              </Link>
-            </li>
 
             <li className="nav-item">
               <Link to="/customers" className={`nav-link ${isActive('/customers')}`}>
                 <i className="nav-icon fas fa-users"></i>
                 <p>Customers</p>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link to="/customer-addresses" className={`nav-link ${isActive('/customer-addresses')}`}>
+                <i className="nav-icon fas fa-address-book"></i>
+                <p>Customer Addresses</p>
               </Link>
             </li>
 
@@ -107,6 +108,30 @@ const Sidebar = () => {
               <Link to="/reports" className={`nav-link ${isActive('/reports')}`}>
                 <i className="nav-icon fas fa-chart-bar"></i>
                 <p>Reports</p>
+              </Link>
+            </li>
+
+            <li className="nav-header text-uppercase px-3 mb-2" style={{color: '#adb5bd', fontSize: '0.75rem', fontWeight: '600', letterSpacing: '0.5px'}}>
+              Settings & Configuration
+            </li>
+            <li className="nav-item">
+              <Link to="/reward-settings" className={`nav-link ${isActive('/reward-settings')}`}>
+                <i className="nav-icon fas fa-gift"></i>
+                <p>Reward Settings</p>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link to="/deactivated-products" className={`nav-link ${isActive('/deactivated-products')}`}>
+                <i className="nav-icon fas fa-ban"></i>
+                <p>Deactivated Products</p>
+              </Link>
+            </li>
+
+            <li className="nav-item">
+              <Link to="/users" className={`nav-link ${isActive('/users')}`}>
+                <i className="nav-icon fas fa-user-cog"></i>
+                <p>User Management</p>
               </Link>
             </li>
 

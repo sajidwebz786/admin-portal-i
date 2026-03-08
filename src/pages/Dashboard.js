@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
-import { categoryService, productService, userService, packService, orderService } from '../services/api';
-import { authService } from '../services/api';
+import { Link, Navigate } from 'react-router-dom';
+import { categoryService, productService, packService, orderService, userService } from '../services/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -13,39 +12,112 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [recentCustomers, setRecentCustomers] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
+    loadNotifications();
+    
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchDashboardData();
+      loadNotifications();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  const loadNotifications = () => {
+    // Load notifications from localStorage (set by backend or other actions)
+    const storedNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+    setNotifications(storedNotifications);
+    setUnreadCount(storedNotifications.filter(n => !n.read).length);
+  };
+
+  const markNotificationRead = (index) => {
+    const updated = [...notifications];
+    updated[index].read = true;
+    localStorage.setItem('adminNotifications', JSON.stringify(updated));
+    setNotifications(updated);
+    setUnreadCount(updated.filter(n => !n.read).length);
+  };
+
+  const clearAllNotifications = () => {
+    localStorage.setItem('adminNotifications', '[]');
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
+  const addNotification = (type, title, message, details = {}) => {
+    const newNotification = {
+      id: Date.now(),
+      type,
+      title,
+      message,
+      details,
+      read: false,
+      timestamp: new Date().toISOString()
+    };
+    const updated = [newNotification, ...notifications];
+    localStorage.setItem('adminNotifications', JSON.stringify(updated));
+    setNotifications(updated);
+    setUnreadCount(prev => prev + 1);
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const [categoriesRes, productsRes, customersRes, packsRes, ordersRes] = await Promise.all([
-        categoryService.getAll(),
-        productService.getAll(),
-        userService.getCustomers(),
-        packService.getAll(),
-        orderService.getAll().catch(err => ({ data: [] })), // Handle errors gracefully
+      // Use the API services which handle authentication automatically
+      const [categoriesRes, productsRes, usersRes, packsRes, ordersRes] = await Promise.all([
+        categoryService.getAll().catch(() => ({ data: [] })),
+        productService.getAll().catch(() => ({ data: [] })),
+        userService.getAll().catch(() => ({ data: [] })),
+        packService.getAll().catch(() => ({ data: [] })),
+        orderService.getAll().catch(() => ({ data: [] })),
       ]);
 
-      console.log('Dashboard data received:', {
-        categories: categoriesRes.data?.length || 0,
-        products: productsRes.data?.length || 0,
-        customers: customersRes.data?.length || 0,
-        packs: packsRes.data?.length || 0,
-        orders: ordersRes.data?.length || 0,
-      });
+      const allUsers = usersRes.data || [];
+      const customersList = allUsers.filter(u => u.role === 'customer');
 
       setStats({
         categories: categoriesRes.data?.length || 0,
         products: productsRes.data?.length || 0,
-        customers: customersRes.data?.length || 0,
+        customers: customersList.length || 0,
         packs: packsRes.data?.length || 0,
         orders: ordersRes.data?.length || 0,
       });
+
+      // Sort orders by date and get most recent 5
+      const orders = ordersRes.data || [];
+      const sortedOrders = orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRecentOrders(sortedOrders.slice(0, 5));
+
+      // Sort customers by date and get most recent 5
+      const sortedCustomers = customersList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRecentCustomers(sortedCustomers.slice(0, 5));
+
+      // Check for new orders that haven't been notified
+      const storedNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const lastOrderNotification = storedNotifications.find(n => n.type === 'new_order');
+      const lastTime = lastOrderNotification ? new Date(lastOrderNotification.timestamp) : new Date(0);
+      
+      // If there are orders created after last notification, add notification
+      const newOrders = sortedOrders.filter(o => new Date(o.createdAt) > lastTime);
+      if (newOrders.length > 0 && storedNotifications.length > 0) {
+        const latestOrder = newOrders[0];
+        addNotification(
+          'new_order',
+          'New Order Received!',
+          `Order #${latestOrder.orderNumber || latestOrder._id?.substring(0, 8)} has been placed`,
+          { orderId: latestOrder._id, total: latestOrder.total }
+        );
+      }
+
     } catch (error) {
       console.error('Dashboard error:', error);
       setError(`Failed to load dashboard data: ${error.message}`);
@@ -55,16 +127,69 @@ const Dashboard = () => {
   };
 
   // Redirect if not authenticated
-  if (!authService.isAuthenticated()) {
+  const adminToken = localStorage.getItem('adminToken');
+  if (!adminToken) {
     return <Navigate to="/login" replace />;
   }
 
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'staff_deleted':
+        return 'fa-user-minus text-danger';
+      case 'new_order':
+        return 'fa-shopping-cart text-success';
+      case 'new_customer':
+        return 'fa-user-plus text-info';
+      case 'product_deletion_request':
+        return 'fa-trash-alt text-warning';
+      default:
+        return 'fa-bell text-warning';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDeliveryDate = (dateString) => {
+    if (!dateString) return 'Not specified';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { 
+      weekday: 'long',
+      day: '2-digit', 
+      month: 'long', 
+      year: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <div className="loading-container">
-          <div className="modern-spinner"></div>
-          <p className="loading-text">Loading your dashboard...</p>
+      <div className="content-wrapper">
+        <div className="content-header">
+          <div className="container-fluid">
+            <div className="row mb-2">
+              <div className="col-sm-6">
+                <h1 className="m-0">Dashboard</h1>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="content">
+          <div className="container-fluid">
+            <div className="text-center py-5">
+              <div className="spinner-border" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -72,11 +197,6 @@ const Dashboard = () => {
 
   return (
     <div className="content-wrapper">
-      {/* Misty Floating Waves */}
-      <div className="wave-1"></div>
-      <div className="wave-2"></div>
-      <div className="wave-3"></div>
-
       <div className="content-header">
         <div className="container-fluid">
           <div className="row mb-2">
@@ -193,222 +313,195 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="row">
+          {/* Pending Deliveries - New Orders from Mobile App */}
+          <div className="row mb-4">
             <div className="col-12">
+              <div className="card card-success">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <i className="fas fa-truck mr-2"></i>
+                    Pending Deliveries - Action Required
+                  </h3>
+                </div>
+                <div className="card-body table-responsive p-0">
+                  {recentOrders.length === 0 ? (
+                    <div className="text-center text-muted py-4">
+                      <i className="fas fa-check-circle text-success mr-2"></i>
+                      No pending orders to deliver!
+                    </div>
+                  ) : (
+                    <table className="table table-hover text-nowrap">
+                      <thead>
+                        <tr>
+                          <th>Order ID</th>
+                          <th>Customer</th>
+                          <th>Items (What)</th>
+                          <th>Delivery Address (Where)</th>
+                          <th>Delivery Date (When)</th>
+                          <th>Status</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentOrders.map((order) => (
+                          <tr key={order._id || order.id}>
+                            <td>
+                              <Link to={`/orders`} className="text-primary font-weight-bold">
+                                #{order.orderNumber || order._id?.substring(0, 8)}
+                              </Link>
+                            </td>
+                            <td>
+                              <div>
+                                <strong>{order.customerName || order.userName || 'N/A'}</strong>
+                                {order.customerPhone && (
+                                  <div className="text-muted small">{order.customerPhone}</div>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              {order.items?.map((item, idx) => (
+                                <div key={idx} className="small">
+                                  {item.quantity}x {item.productName || item.name || item.product}
+                                </div>
+                              )) || 
+                                <span className="text-muted">No items details</span>
+                              }
+                            </td>
+                            <td>
+                              {order.shippingAddress ? (
+                                <div className="small">
+                                  {order.shippingAddress.address}, {order.shippingAddress.city}
+                                  {order.shippingAddress.state && `, ${order.shippingAddress.state}`}
+                                  {order.shippingAddress.zipCode && ` - ${order.shippingAddress.zipCode}`}
+                                </div>
+                              ) : order.deliveryAddress ? (
+                                <div className="small">
+                                  {order.deliveryAddress.address}, {order.deliveryAddress.city}
+                                </div>
+                              ) : (
+                                <span className="text-muted">Address not available</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className="text-success font-weight-bold">
+                                {formatDeliveryDate(order.deliveryDate || order.scheduledDate)}
+                              </span>
+                              {order.deliveryTime && (
+                                <div className="small text-muted">
+                                  Time: {order.deliveryTime}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`badge ${
+                                order.status === 'pending' ? 'bg-warning' :
+                                order.status === 'processing' ? 'bg-info' :
+                                order.status === 'delivered' ? 'bg-success' :
+                                order.status === 'cancelled' ? 'bg-danger' : 'bg-secondary'
+                              }`}>
+                                {order.status || 'Pending'}
+                              </span>
+                            </td>
+                            <td className="font-weight-bold">
+                              ₹{order.total?.toFixed(2) || order.amount?.toFixed(2) || '0.00'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                <div className="card-footer">
+                  <Link to="/orders" className="btn btn-success btn-sm">
+                    View All Orders <i className="fas fa-arrow-right ml-1"></i>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Customers */}
+          <div className="row mb-4">
+            <div className="col-md-6">
+              <div className="card card-info">
+                <div className="card-header">
+                  <h3 className="card-title">
+                    <i className="fas fa-user-plus mr-2"></i>
+                    New Registrations
+                  </h3>
+                </div>
+                <div className="card-body table-responsive p-0">
+                  {recentCustomers.length === 0 ? (
+                    <div className="text-center text-muted py-4">
+                      No recent registrations
+                    </div>
+                  ) : (
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Customer</th>
+                          <th>Email</th>
+                          <th>Registered</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentCustomers.map((customer) => (
+                          <tr key={customer._id || customer.id}>
+                            <td>{customer.name}</td>
+                            <td>{customer.email}</td>
+                            <td>{formatDate(customer.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+                <div className="card-footer">
+                  <Link to="/customers" className="btn btn-info btn-sm">
+                    View All Customers <i className="fas fa-arrow-right ml-1"></i>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="col-md-6">
               <div className="card">
                 <div className="card-header">
                   <h3 className="card-title">Quick Actions</h3>
                 </div>
                 <div className="card-body">
                   <div className="row">
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-info">
-                          <i className="fas fa-th"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Categories</span>
-                          <span className="info-box-number">
-                            Manage product categories
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-info" style={{ width: '70%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/categories" className="btn btn-info btn-sm">
-                              Manage Categories
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/categories" className="btn btn-block btn-info btn-sm">
+                        <i className="fas fa-th mr-1"></i> Categories
+                      </Link>
                     </div>
-
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-success">
-                          <i className="fas fa-box"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Products</span>
-                          <span className="info-box-number">
-                            Add and update inventory
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-success" style={{ width: '85%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/products" className="btn btn-success btn-sm">
-                              Manage Products
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/products" className="btn btn-block btn-success btn-sm">
+                        <i className="fas fa-box mr-1"></i> Products
+                      </Link>
                     </div>
-
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-warning">
-                          <i className="fas fa-cubes"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Packs</span>
-                          <span className="info-box-number">
-                            Create product bundles
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-warning" style={{ width: '60%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/packs" className="btn btn-warning btn-sm">
-                              Manage Packs
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/packs" className="btn btn-block btn-warning btn-sm">
+                        <i className="fas fa-cubes mr-1"></i> Packs
+                      </Link>
                     </div>
-
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-danger">
-                          <i className="fas fa-users"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Customers</span>
-                          <span className="info-box-number">
-                            View customer data
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-danger" style={{ width: '90%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/customers" className="btn btn-danger btn-sm">
-                              View Customers
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/orders" className="btn btn-block btn-primary btn-sm">
+                        <i className="fas fa-shopping-cart mr-1"></i> Orders
+                      </Link>
                     </div>
-
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-primary">
-                          <i className="fas fa-shopping-cart"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Orders</span>
-                          <span className="info-box-number">
-                            Track and manage orders
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-primary" style={{ width: '75%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/orders" className="btn btn-primary btn-sm">
-                              Track Orders
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/users" className="btn btn-block btn-secondary btn-sm">
+                        <i className="fas fa-user-cog mr-1"></i> Staff
+                      </Link>
                     </div>
-
-                    <div className="col-md-4 col-sm-6 col-12">
-                      <div className="info-box">
-                        <span className="info-box-icon bg-secondary">
-                          <i className="fas fa-chart-line"></i>
-                        </span>
-                        <div className="info-box-content">
-                          <span className="info-box-text">Analytics</span>
-                          <span className="info-box-number">
-                            View business insights
-                          </span>
-                          <div className="progress">
-                            <div className="progress-bar bg-secondary" style={{ width: '50%' }}></div>
-                          </div>
-                          <span className="progress-description">
-                            <Link to="/payments" className="btn btn-secondary btn-sm">
-                              View Analytics
-                            </Link>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-6 mb-2">
+                      <Link to="/reward-settings" className="btn btn-block btn-danger btn-sm">
+                        <i className="fas fa-gift mr-1"></i> Rewards
+                      </Link>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity & System Status */}
-          <div className="row">
-            <div className="col-md-8">
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title">Recent Activity</h3>
-                </div>
-                <div className="card-body">
-                  <div className="timeline timeline-inverse">
-                    <div className="time-label">
-                      <span className="bg-danger">Today</span>
-                    </div>
-                    <div>
-                      <i className="fas fa-user bg-primary"></i>
-                      <div className="timeline-item">
-                        <span className="time">
-                          <i className="fas fa-clock"></i> Just now
-                        </span>
-                        <h3 className="timeline-header">
-                          <a href="#">Admin</a> logged into the system
-                        </h3>
-                      </div>
-                    </div>
-                    <div>
-                      <i className="fas fa-shopping-cart bg-success"></i>
-                      <div className="timeline-item">
-                        <span className="time">
-                          <i className="fas fa-clock"></i> 2 minutes ago
-                        </span>
-                        <h3 className="timeline-header">
-                          New order placed - Order #1234
-                        </h3>
-                      </div>
-                    </div>
-                    <div>
-                      <i className="fas fa-box bg-warning"></i>
-                      <div className="timeline-item">
-                        <span className="time">
-                          <i className="fas fa-clock"></i> 5 minutes ago
-                        </span>
-                        <h3 className="timeline-header">
-                          Product inventory updated
-                        </h3>
-                      </div>
-                    </div>
-                    <div>
-                      <i className="fas fa-clock bg-gray"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4">
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title">System Status</h3>
-                </div>
-                <div className="card-body">
-                  <div className="callout callout-success">
-                    <h5>Server Status</h5>
-                    <p>Online and running smoothly</p>
-                  </div>
-                  <div className="callout callout-info">
-                    <h5>Database</h5>
-                    <p>Connected and operational</p>
-                  </div>
-                  <div className="callout callout-warning">
-                    <h5>API Status</h5>
-                    <p>Active with normal response times</p>
                   </div>
                 </div>
               </div>
@@ -416,7 +509,6 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
-
     </div>
   );
 };

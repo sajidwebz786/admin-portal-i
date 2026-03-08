@@ -96,13 +96,50 @@ const Products = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productService.delete(id);
-        fetchData();
-      } catch (error) {
-        console.error('Delete error:', error);
-        setError('Failed to delete product');
+    // Check who is logged in
+    const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+    const isAdmin = adminUser.role === 'admin';
+    
+    if (isAdmin) {
+      // Admin can delete directly - soft delete to deactivated
+      if (window.confirm('Are you sure you want to delete this product? It will be moved to Deactivated Products.')) {
+        try {
+          await productService.update(id, { isActive: false, deactivatedAt: new Date().toISOString(), deactivationReason: 'Deleted by admin' });
+          fetchData();
+        } catch (error) {
+          console.error('Delete error:', error);
+          setError('Failed to delete product');
+        }
+      }
+    } else {
+      // Staff members need admin approval for deletion
+      if (window.confirm('This will send a deletion request to the admin for approval. Continue?')) {
+        try {
+          // Create deletion request notification for admin
+          const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+          const product = products.find(p => p.id === id || p._id === id);
+          const newNotification = {
+            id: Date.now(),
+            type: 'product_deletion_request',
+            title: 'Product Deletion Request',
+            message: `${adminUser.name || 'A staff member'} requested to delete product: ${product?.name || 'Unknown'}`,
+            details: { 
+              productId: id, 
+              productName: product?.name,
+              requestedBy: adminUser.name || adminUser.email,
+              requestedAt: new Date().toISOString()
+            },
+            read: false,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem('adminNotifications', JSON.stringify([newNotification, ...notifications]));
+          
+          alert('Deletion request sent to admin for approval!');
+          fetchData();
+        } catch (error) {
+          console.error('Delete request error:', error);
+          setError('Failed to send deletion request');
+        }
       }
     }
   };

@@ -106,9 +106,20 @@ export const userService = {
   getAll: () => api.get('/users'),
   getById: (id) => api.get(`/users/${id}`),
   getCustomers: () => api.get('/users?role=customer'),
+  create: (data) => api.post('/users', data),
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   toggleStatus: (id) => api.patch(`/users/${id}/status`),
+};
+
+// Address services
+export const addressService = {
+  getAll: () => api.get('/addresses'),
+  getById: (id) => api.get(`/addresses/${id}`),
+  getByUserId: (userId) => api.get(`/addresses?userId=${userId}`),
+  create: (data) => api.post('/addresses', data),
+  update: (id, data) => api.put(`/addresses/${id}`, data),
+  delete: (id) => api.delete(`/addresses/${id}`),
 };
 
 // Unit Type services
