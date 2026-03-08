@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { packTypeService } from '../services/api';
+import { packTypeService, api } from '../services/api';
 import { authService } from '../services/api';
 
 const PackTypes = () => {
   const [packTypes, setPackTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPackType, setEditingPackType] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    duration: 'weekly',
+    duration: 'small',
     basePrice: '',
+    sizeLabel: '',
+    persons: '',
+    days: '',
+    fruitCount: '',
+    weight: '',
+    targetAudience: '',
+    includesExotic: false,
   });
+
+  // Get current user
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+  const isStaff = currentUser?.role === 'staff';
 
   useEffect(() => {
     fetchPackTypes();
@@ -42,17 +55,21 @@ const PackTypes = () => {
       const packTypeData = {
         ...formData,
         basePrice: parseFloat(formData.basePrice),
+        includesExotic: formData.includesExotic || false,
       };
 
       if (editingPackType) {
         await packTypeService.update(editingPackType.id, packTypeData);
+        setSuccess(`${formData.name} has been updated successfully`);
       } else {
         await packTypeService.create(packTypeData);
+        setSuccess(`${formData.name} has been created successfully`);
       }
       setShowModal(false);
       setEditingPackType(null);
       resetForm();
       fetchPackTypes();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       setError('Failed to save pack type');
       console.error('Save error:', error);
@@ -65,18 +82,48 @@ const PackTypes = () => {
       name: packType.name,
       duration: packType.duration,
       basePrice: packType.basePrice?.toString() || '',
+      sizeLabel: packType.sizeLabel || '',
+      persons: packType.persons || '',
+      days: packType.days || '',
+      fruitCount: packType.fruitCount || '',
+      weight: packType.weight || '',
+      targetAudience: packType.targetAudience || '',
+      includesExotic: packType.includesExotic || false,
     });
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this pack type?')) {
-      try {
-        await packTypeService.delete(id);
-        fetchPackTypes();
-      } catch (error) {
-        setError('Failed to delete pack type');
-        console.error('Delete error:', error);
+    const packType = packTypes.find(p => p.id === id);
+    
+    if (isStaff && !isAdmin) {
+      if (window.confirm(`Delete request: Are you sure you want to request deletion of "${packType.name}"? The request will be sent to admin for approval.`)) {
+        try {
+          await api.post('/delete-requests', {
+            entityType: 'packType',
+            entityId: id,
+            entityName: packType.name,
+            requestedBy: currentUser.id,
+            requestNote: `Request to delete pack type: ${packType.name}`
+          });
+          setSuccess(`Delete request for "${packType.name}" has been submitted to admin for approval`);
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          console.error('Delete request error:', error);
+          setError('Failed to submit delete request');
+        }
+      }
+    } else {
+      if (window.confirm('Are you sure you want to delete this pack type?')) {
+        try {
+          await packTypeService.delete(id);
+          setSuccess(`${packType.name} has been marked as inactive`);
+          fetchPackTypes();
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          setError('Failed to delete pack type');
+          console.error('Delete error:', error);
+        }
       }
     }
   };
@@ -84,8 +131,15 @@ const PackTypes = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      duration: 'weekly',
+      duration: 'small',
       basePrice: '',
+      sizeLabel: '',
+      persons: '',
+      days: '',
+      fruitCount: '',
+      weight: '',
+      targetAudience: '',
+      includesExotic: false,
     });
   };
 
@@ -151,6 +205,24 @@ const PackTypes = () => {
           </div>
         )}
 
+        {/* Success Alert */}
+        {success && (
+          <div className="row">
+            <div className="col-12">
+              <div className="alert alert-success alert-dismissible">
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setSuccess('')}
+                >
+                  ×
+                </button>
+                {success}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Pack Types Management */}
         <div className="row">
           <div className="col-12">
@@ -173,10 +245,12 @@ const PackTypes = () => {
                       <tr>
                         <th>ID</th>
                         <th>Name</th>
+                        <th>Size</th>
+                        <th>Persons</th>
                         <th>Duration</th>
-                        <th>Base Price</th>
+                        <th>Price</th>
+                        <th>Target</th>
                         <th>Status</th>
-                        <th>Created At</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -279,9 +353,10 @@ const PackTypes = () => {
                         }
                         required
                       >
-                        <option value="weekly">Weekly</option>
-                        <option value="bi-weekly">Bi-weekly</option>
-                        <option value="monthly">Monthly</option>
+                        <option value="small">Small Pack</option>
+                        <option value="medium">Medium Pack</option>
+                        <option value="large">Large Pack</option>
+                        <option value="custom">Custom Pack</option>
                       </select>
                     </div>
 
@@ -298,6 +373,111 @@ const PackTypes = () => {
                         placeholder="Enter base price"
                         required
                       />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Size Label</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.sizeLabel}
+                        onChange={(e) =>
+                          setFormData({ ...formData, sizeLabel: e.target.value })
+                        }
+                        placeholder="e.g., Small, Medium, Large"
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>For Persons</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData.persons}
+                            onChange={(e) =>
+                              setFormData({ ...formData, persons: e.target.value })
+                            }
+                            placeholder="e.g., 1-2 Persons"
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>Duration</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData.days}
+                            onChange={(e) =>
+                              setFormData({ ...formData, days: e.target.value })
+                            }
+                            placeholder="e.g., 3-4 Days"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Fruit Count</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.fruitCount}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fruitCount: e.target.value })
+                        }
+                        placeholder="e.g., 4-5 Seasonal Fruits"
+                      />
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>Weight</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData.weight}
+                            onChange={(e) =>
+                              setFormData({ ...formData, weight: e.target.value })
+                            }
+                            placeholder="e.g., Approx 3-4 Kg"
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>Target Audience</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData.targetAudience}
+                            onChange={(e) =>
+                              setFormData({ ...formData, targetAudience: e.target.value })
+                            }
+                            placeholder="e.g., Basic Family Consumption"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="includesExotic"
+                          checked={formData.includesExotic}
+                          onChange={(e) =>
+                            setFormData({ ...formData, includesExotic: e.target.checked })
+                          }
+                        />
+                        <label className="form-check-label" htmlFor="includesExotic">
+                          Includes Exotic Fruits
+                        </label>
+                      </div>
                     </div>
                   </div>
                   <div className="modal-footer">

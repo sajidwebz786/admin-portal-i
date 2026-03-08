@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { categoryService } from '../services/api';
+import { categoryService, api } from '../services/api';
 import { authService } from '../services/api';
 
 
@@ -8,6 +8,7 @@ const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,6 +16,11 @@ const Categories = () => {
     description: '',
     image: '',
   });
+
+  // Get current user
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+  const isStaff = currentUser?.role === 'staff';
 
   useEffect(() => {
     fetchCategories();
@@ -42,13 +48,16 @@ const Categories = () => {
     try {
       if (editingCategory) {
         await categoryService.update(editingCategory.id, formData);
+        setSuccess(`${formData.name} has been updated successfully`);
       } else {
         await categoryService.create(formData);
+        setSuccess(`${formData.name} has been created successfully`);
       }
       setShowModal(false);
       setEditingCategory(null);
       resetForm();
       fetchCategories();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       setError('Failed to save category');
       console.error('Save error:', error);
@@ -66,13 +75,36 @@ const Categories = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      try {
-        await categoryService.delete(id);
-        fetchCategories();
-      } catch (error) {
-        setError('Failed to delete category');
-        console.error('Delete error:', error);
+    const category = categories.find(c => c.id === id);
+    
+    if (isStaff && !isAdmin) {
+      if (window.confirm(`Delete request: Are you sure you want to request deletion of "${category.name}"? The request will be sent to admin for approval.`)) {
+        try {
+          await api.post('/delete-requests', {
+            entityType: 'category',
+            entityId: id,
+            entityName: category.name,
+            requestedBy: currentUser.id,
+            requestNote: `Request to delete category: ${category.name}`
+          });
+          setSuccess(`Delete request for "${category.name}" has been submitted to admin for approval`);
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          console.error('Delete request error:', error);
+          setError('Failed to submit delete request');
+        }
+      }
+    } else {
+      if (window.confirm('Are you sure you want to delete this category?')) {
+        try {
+          await categoryService.delete(id);
+          setSuccess(`${category.name} has been marked as inactive`);
+          fetchCategories();
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          setError('Failed to delete category');
+          console.error('Delete error:', error);
+        }
       }
     }
   };
@@ -142,6 +174,24 @@ const Categories = () => {
                   ×
                 </button>
                 {error}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div className="row">
+            <div className="col-12">
+              <div className="alert alert-success alert-dismissible">
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setSuccess('')}
+                >
+                  ×
+                </button>
+                {success}
               </div>
             </div>
           </div>

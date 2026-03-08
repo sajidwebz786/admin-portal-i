@@ -18,6 +18,17 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import AIAssistant from './components/AIAssistant';
 
+// Wallet & Credits imports
+import CreditPackages from './pages/CreditPackages';
+import Notifications from './pages/Notifications';
+import RewardSettings from './pages/RewardSettings';
+import WalletManagement from './pages/WalletManagement';
+
+// New imports
+import DeleteRequests from './pages/DeleteRequests';
+import DeactivatedProducts from './pages/DeactivatedProducts';
+import StaffUsers from './pages/StaffUsers';
+
 function App() {
   return (
     <Router>
@@ -40,6 +51,17 @@ function App() {
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/payments" element={<Payments />} />
                   <Route path="/deliveries" element={<Deliveries />} />
+                  
+                  {/* Wallet & Credits Routes */}
+                  <Route path="/credit-packages" element={<CreditPackages />} />
+                  <Route path="/reward-settings" element={<RewardSettings />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/wallet-management" element={<WalletManagement />} />
+                  
+                  {/* New Routes */}
+                  <Route path="/delete-requests" element={<DeleteRequests />} />
+                  <Route path="/deactivated-products" element={<DeactivatedProducts />} />
+                  <Route path="/staff-users" element={<StaffUsers />} />
                 </Routes>
               </div>
               <AIAssistant />

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { deleteRequestService, notificationService } from '../services/api';
 
 const Header = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     // Load dark mode preference from localStorage
@@ -24,12 +29,49 @@ const Header = () => {
     const adminUser = localStorage.getItem('adminUser');
     if (adminUser) {
       try {
-        setUser(JSON.parse(adminUser));
+        const parsedUser = JSON.parse(adminUser);
+        setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing adminUser from localStorage:', error);
-      }
+    }
     }
   }, []);
+
+  // Fetch pending delete requests count and notifications for admin
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      fetchPendingRequests();
+      fetchNotifications();
+      
+      // Set up interval to refresh data
+      const interval = setInterval(() => {
+        fetchPendingRequests();
+        fetchNotifications();
+      }, 30000); // Refresh every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchPendingRequests = async () => {
+    try {
+      const response = await deleteRequestService.getPendingCount();
+      setPendingRequestsCount(response.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching pending requests count:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await notificationService.getAll({ limit: 5 });
+      setNotifications(response.data.notifications || response.data || []);
+      const unreadResponse = await notificationService.getUnreadCount();
+      setUnreadCount(unreadResponse.data.count || 0);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
 
   const handleToggleSidebar = () => {
     const newCollapsedState = !isSidebarCollapsed;
@@ -55,6 +97,23 @@ const Header = () => {
     }
   };
 
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'order':
+        return 'fa-shopping-cart';
+      case 'delete_request':
+        return 'fa-exclamation-circle';
+      case 'system':
+        return 'fa-user-plus';
+      case 'payment':
+        return 'fa-credit-card';
+      default:
+        return 'fa-bell';
+    }
+  };
+
+  const totalNotifications = pendingRequestsCount + unreadCount;
+
   return (
     <nav className="main-header navbar navbar-expand navbar-white navbar-light">
       <ul className="navbar-nav">
@@ -76,17 +135,55 @@ const Header = () => {
       </ul>
 
       <ul className="navbar-nav ml-auto">
+        {/* Delete Requests Badge - Only for Admin */}
+        {user && user.role === 'admin' && pendingRequestsCount > 0 && (
+          <li className="nav-item dropdown">
+            <Link className="nav-link" to="/delete-requests">
+              <i className="far fa-exclamation-circle"></i>
+              <span className="badge badge-danger navbar-badge">{pendingRequestsCount}</span>
+            </Link>
+          </li>
+        )}
+
+        {/* Notifications Dropdown */}
         <li className="nav-item dropdown">
           <a className="nav-link" data-toggle="dropdown" href="#">
             <i className="far fa-bell"></i>
-            <span className="badge badge-warning navbar-badge">0</span>
+            {totalNotifications > 0 && (
+              <span className="badge badge-warning navbar-badge">{totalNotifications}</span>
+            )}
           </a>
           <div className="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-            <span className="dropdown-item dropdown-header">0 Notifications</span>
+            <span className="dropdown-item dropdown-header">
+              {totalNotifications > 0 ? `${totalNotifications} Notifications` : 'No Notifications'}
+            </span>
             <div className="dropdown-divider"></div>
-            <a href="#" className="dropdown-item">
-              <i className="fas fa-envelope mr-2"></i> No new messages
-            </a>
+            
+            {notifications.length > 0 ? (
+              notifications.slice(0, 5).map((notification) => (
+                <div key={notification.id} className="dropdown-item">
+                  <i className={`fas ${getNotificationIcon(notification.type)} mr-2`}></i>
+                  <div>
+                    <strong>{notification.title}</strong>
+                    <p className="mb-0 text-muted" style={{ fontSize: '0.85rem' }}>
+                      {notification.message}
+                    </p>
+                    <small className="text-muted">
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </small>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <a href="#" className="dropdown-item">
+                <i className="fas fa-bell mr-2"></i> No new notifications
+              </a>
+            )}
+            
+            <div className="dropdown-divider"></div>
+            <Link to="/notifications" className="dropdown-item dropdown-footer">
+              View All Notifications
+            </Link>
           </div>
         </li>
 
@@ -113,6 +210,12 @@ const Header = () => {
             />
             <span className="d-none d-md-inline" style={{ marginRight: '15px' }}>
               {user ? user.name || user.email || 'Admin' : 'Admin'}
+              {user && user.role === 'admin' && (
+                <span className="badge badge-success ml-1">Admin</span>
+              )}
+              {user && user.role === 'staff' && (
+                <span className="badge badge-info ml-1">Staff</span>
+              )}
             </span>
             <button
               className="btn btn-outline-secondary btn-sm"

@@ -2,8 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  //baseURL: 'http://localhost:3001/api', // Local development server
-  baseURL: 'https://freshgrupo-server.onrender.com/api', // Production server (Render)
+  baseURL: process.env.REACT_APP_API_URL || 'https://freshgrupo-server.onrender.com/api',
   timeout: 10000,
 });
 
@@ -33,12 +32,13 @@ api.interceptors.response.use(
 );
 
 // Authentication services
+const getBaseURL = () => process.env.REACT_APP_API_URL || 'https://freshgrupo-server.onrender.com/api';
+
 export const authService = {
   login: async (email, password) => {
     try {
       const response = await axios.post(
-        //'http://localhost:3001/api/auth/admin-login',
-         'https://freshgrupo-server.onrender.com/api/auth/admin-login',
+        `${getBaseURL()}/auth/admin-login`,
         { email, password }
       );
       return response.data;
@@ -50,8 +50,7 @@ export const authService = {
   register: async (name, email, password, phone = '') => {
     try {
       const response = await axios.post(
-        //'http://localhost:3001/api/auth/register',
-         'https://freshgrupo-server.onrender.com/api/auth/register',
+        `${getBaseURL()}/auth/register`,
         { name, email, password, phone }
       );
       return response.data;
@@ -92,6 +91,8 @@ export const productService = {
   delete: (id) => api.delete(`/products/${id}`),
   updateStock: (id, stock) => api.patch(`/products/${id}/stock`, { stock }),
   updatePrice: (id, price) => api.patch(`/products/${id}/price`, { price }),
+  getDeactivated: () => api.get('/products/deactivated'),
+  activate: (id) => api.patch(`/products/${id}/activate`),
 };
 
 // User services
@@ -102,6 +103,16 @@ export const userService = {
   update: (id, data) => api.put(`/users/${id}`, data),
   delete: (id) => api.delete(`/users/${id}`),
   toggleStatus: (id) => api.patch(`/users/${id}/status`),
+};
+
+// Delete Request services
+export const deleteRequestService = {
+  getAll: () => api.get('/delete-requests'),
+  getPending: () => api.get('/delete-requests?status=pending'),
+  create: (data) => api.post('/delete-requests', data),
+  approve: (id, data) => api.patch(`/delete-requests/${id}/approve`, data),
+  reject: (id, data) => api.patch(`/delete-requests/${id}/reject`, data),
+  getPendingCount: () => api.get('/delete-requests/pending-count'),
 };
 
 // Unit Type services
@@ -129,6 +140,8 @@ export const packService = {
   update: (id, data) => api.put(`/packs/${id}`, data),
   delete: (id) => api.delete(`/packs/${id}`),
   updatePrice: (id, price) => api.patch(`/packs/${id}/price`, { price }),
+  getDeactivated: () => api.get('/packs/deactivated'),
+  activate: (id) => api.patch(`/packs/${id}/activate`),
 };
 
 // Pack Product services
@@ -140,16 +153,10 @@ export const packProductService = {
 
 // Public API services for mobile app
 export const publicService = {
-  // getCategories: () => axios.get('http://localhost:3001/api/public/categories'),
-  // getProducts: () => axios.get('http://localhost:3001/api/public/products'),
-  // getPacks: () => axios.get('http://localhost:3001/api/public/packs'),
-  // getCategoryPacks: (categoryId) =>
-  //   axios.get(`http://localhost:3001/api/public/categories/${categoryId}/packs`),
-
-  getCategories: () => axios.get('https://freshgrupo-server.onrender.com/api/public/categories'),
-  getProducts: () => axios.get('https://freshgrupo-server.onrender.com/api/public/products'),
-  getPacks: () => axios.get('https://freshgrupo-server.onrender.com/api/public/packs'),
-  getCategoryPacks: (categoryId) => axios.get(`https://freshgrupo-server.onrender.com/api/public/categories/${categoryId}/packs`),
+  getCategories: () => axios.get(`${getBaseURL()}/public/categories`),
+  getProducts: () => axios.get(`${getBaseURL()}/public/products`),
+  getPacks: () => axios.get(`${getBaseURL()}/public/packs`),
+  getCategoryPacks: (categoryId) => axios.get(`${getBaseURL()}/public/categories/${categoryId}/packs`),
 };
 
 // Delivery services
@@ -186,6 +193,44 @@ export const paymentService = {
   create: (data) => api.post('/payments', data),
   createRazorpayOrder: (data) => api.post('/create-razorpay-order', data),
   verifyPayment: (data) => api.post('/verify-payment', data),
+};
+
+// Credit Package services (for wallet/credits system)
+export const creditPackageService = {
+  getAll: () => api.get('/credit-packages'),
+  getAdminAll: () => api.get('/credit-packages/admin'),
+  getById: (id) => api.get(`/credit-packages/${id}`),
+  create: (data) => api.post('/credit-packages', data),
+  update: (id, data) => api.put(`/credit-packages/${id}`, data),
+  delete: (id) => api.delete(`/credit-packages/${id}`),
+};
+
+// Notification services
+export const notificationService = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  create: (data) => api.post('/notifications', data),
+};
+
+// Reward Config services
+export const rewardConfigService = {
+  get: () => api.get('/reward-config'),
+  getAdminAll: () => api.get('/reward-config/admin'),
+  update: (id, data) => api.put(`/reward-config/${id}`, data),
+  create: (data) => api.post('/reward-config', data),
+  calculate: (orderAmount) => api.post('/reward-config/calculate', { orderAmount }),
+};
+
+// Wallet Management services (admin)
+export const walletService = {
+  getAllWallets: (params) => api.get('/admin/wallet', { params }),
+  getWalletByUser: (userId) => api.get(`/admin/wallet/user/${userId}`),
+  getAllTransactions: (params) => api.get('/admin/wallet/transactions', { params }),
+  getStats: () => api.get('/admin/wallet/stats'),
+  addCredits: (data) => api.post('/admin/wallet/add-credits', data),
 };
 
 export default api;

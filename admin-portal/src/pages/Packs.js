@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { packService, categoryService, packTypeService, productService, packProductService } from '../services/api';
+import { packService, categoryService, packTypeService, productService, packProductService, api } from '../services/api';
 import { authService } from '../services/api';
 
 const Packs = () => {
@@ -10,6 +10,7 @@ const Packs = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
   const [formData, setFormData] = useState({
@@ -23,6 +24,11 @@ const Packs = () => {
     validUntil: '',
   });
   const [selectedProducts, setSelectedProducts] = useState([]);
+
+  // Get current user
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+  const isStaff = currentUser?.role === 'staff';
 
   useEffect(() => {
     fetchData();
@@ -95,6 +101,12 @@ const Packs = () => {
       setEditingPack(null);
       resetForm();
       fetchData();
+      
+      const message = editingPack 
+        ? `${formData.name} has been updated successfully` 
+        : `${formData.name} has been created successfully`;
+      setSuccess(message);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       setError('Failed to save pack');
       console.error('Save error:', error);
@@ -132,13 +144,38 @@ const Packs = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this pack?')) {
-      try {
-        await packService.delete(id);
-        fetchData();
-      } catch (error) {
-        setError('Failed to delete pack');
-        console.error('Delete error:', error);
+    const pack = packs.find(p => p.id === id);
+    
+    if (isStaff && !isAdmin) {
+      // Staff users cannot delete directly - create a delete request
+      if (window.confirm(`Delete request: Are you sure you want to request deletion of "${pack.name}"? The request will be sent to admin for approval.`)) {
+        try {
+          await api.post('/delete-requests', {
+            entityType: 'pack',
+            entityId: id,
+            entityName: pack.name,
+            requestedBy: currentUser.id,
+            requestNote: `Request to delete pack: ${pack.name}`
+          });
+          setSuccess(`Delete request for "${pack.name}" has been submitted to admin for approval`);
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          console.error('Delete request error:', error);
+          setError('Failed to submit delete request');
+        }
+      }
+    } else {
+      // Admin can delete directly
+      if (window.confirm('Are you sure you want to delete this pack?')) {
+        try {
+          await packService.delete(id);
+          setSuccess(`${pack.name} has been marked as inactive`);
+          fetchData();
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          setError('Failed to delete pack');
+          console.error('Delete error:', error);
+        }
       }
     }
   };
@@ -254,6 +291,24 @@ const Packs = () => {
                   ×
                 </button>
                 {error}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && (
+          <div className="row">
+            <div className="col-12">
+              <div className="alert alert-success alert-dismissible">
+                <button
+                  type="button"
+                  className="close"
+                  onClick={() => setSuccess('')}
+                >
+                  ×
+                </button>
+                {success}
               </div>
             </div>
           </div>

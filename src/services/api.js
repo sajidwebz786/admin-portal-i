@@ -2,9 +2,8 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  //baseURL: 'http://localhost:3001/api', // Local development server
-  baseURL: 'https://freshgrupo-server.onrender.com/api', // Production server (Render)
-  timeout: 30000, // Increased timeout for file uploads
+  baseURL: process.env.REACT_APP_API_URL || 'https://freshgrupo-server.onrender.com/api',
+  timeout: 30000,
 });
 
 // Request interceptor to add auth token
@@ -33,12 +32,13 @@ api.interceptors.response.use(
 );
 
 // Authentication services
+const getBaseURL = () => process.env.REACT_APP_API_URL || 'https://freshgrupo-server.onrender.com/api';
+
 export const authService = {
   login: async (email, password) => {
     try {
       const response = await axios.post(
-        //'http://localhost:3001/api/auth/admin-login',
-         'https://freshgrupo-server.onrender.com/api/auth/admin-login',
+        `${getBaseURL()}/auth/admin-login`,
         { email, password }
       );
       return response.data;
@@ -50,8 +50,7 @@ export const authService = {
   register: async (name, email, password, phone = '') => {
     try {
       const response = await axios.post(
-        //'http://localhost:3001/api/auth/register',
-         'https://freshgrupo-server.onrender.com/api/auth/register',
+        `${getBaseURL()}/auth/register`,
         { name, email, password, phone }
       );
       return response.data;
@@ -148,16 +147,11 @@ export const packProductService = {
 
 // Public API services for mobile app
 export const publicService = {
-  // getCategories: () => axios.get('http://localhost:3001/api/public/categories'),
-  // getProducts: () => axios.get('http://localhost:3001/api/public/products'),
-  // getPacks: () => axios.get('http://localhost:3001/api/public/packs'),
-  // getCategoryPacks: (categoryId) =>
-  //   axios.get(`http://localhost:3001/api/public/categories/${categoryId}/packs`),
-
-  getCategories: () => axios.get('https://freshgrupo-server.onrender.com/api/public/categories'),
-  getProducts: () => axios.get('https://freshgrupo-server.onrender.com/api/public/products'),
-  getPacks: () => axios.get('https://freshgrupo-server.onrender.com/api/public/packs'),
-  getCategoryPacks: (categoryId) => axios.get(`https://freshgrupo-server.onrender.com/api/public/categories/${categoryId}/packs`),
+  getCategories: () => axios.get(`${getBaseURL()}/public/categories`),
+  getProducts: () => axios.get(`${getBaseURL()}/public/products`),
+  getPacks: () => axios.get(`${getBaseURL()}/public/packs`),
+  getCategoryPacks: (categoryId) =>
+    axios.get(`${getBaseURL()}/public/categories/${categoryId}/packs`),
 };
 
 // Delivery services

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { productService, categoryService, unitTypeService } from '../services/api';
+import { productService, categoryService, unitTypeService, api } from '../services/api';
 import { authService } from '../services/api';
 
 const Products = () => {
@@ -9,6 +9,7 @@ const Products = () => {
   const [unitTypes, setUnitTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -22,6 +23,11 @@ const Products = () => {
     quantity: '1',
     stock: '',
   });
+
+  // Get current user
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+  const isStaff = currentUser?.role === 'staff';
 
   useEffect(() => {
     fetchData();
@@ -63,14 +69,19 @@ const Products = () => {
 
       if (editingProduct) {
         await productService.update(editingProduct.id, productData);
+        setSuccess(`${formData.name} has been updated successfully`);
       } else {
         await productService.create(productData);
+        setSuccess(`${formData.name} has been created successfully`);
       }
 
       setShowModal(false);
       setEditingProduct(null);
       resetForm();
       fetchData();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Save error:', error);
       setError('Failed to save product');
@@ -93,13 +104,38 @@ const Products = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await productService.delete(id);
-        fetchData();
-      } catch (error) {
-        console.error('Delete error:', error);
-        setError('Failed to delete product');
+    const product = products.find(p => p.id === id);
+    
+    if (isStaff && !isAdmin) {
+      // Staff users cannot delete directly - create a delete request
+      if (window.confirm(`Delete request: Are you sure you want to request deletion of "${product.name}"? The request will be sent to admin for approval.`)) {
+        try {
+          await api.post('/delete-requests', {
+            entityType: 'product',
+            entityId: id,
+            entityName: product.name,
+            requestedBy: currentUser.id,
+            requestNote: `Request to delete product: ${product.name}`
+          });
+          setSuccess(`Delete request for "${product.name}" has been submitted to admin for approval`);
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          console.error('Delete request error:', error);
+          setError('Failed to submit delete request');
+        }
+      }
+    } else {
+      // Admin can delete directly
+      if (window.confirm('Are you sure you want to delete this product?')) {
+        try {
+          await productService.delete(id);
+          setSuccess(`${product.name} has been marked as inactive`);
+          fetchData();
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (error) {
+          console.error('Delete error:', error);
+          setError('Failed to delete product');
+        }
       }
     }
   };
@@ -160,6 +196,14 @@ const Products = () => {
           <div className="alert alert-danger alert-dismissible">
             <button type="button" className="close" onClick={() => setError('')}>×</button>
             {error}
+          </div>
+        )}
+
+        {/* Success */}
+        {success && (
+          <div className="alert alert-success alert-dismissible">
+            <button type="button" className="close" onClick={() => setSuccess('')}>×</button>
+            {success}
           </div>
         )}
 
