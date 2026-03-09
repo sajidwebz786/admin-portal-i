@@ -8,7 +8,8 @@ const Packs = () => {
   const [filteredPacks, setFilteredPacks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
-  const [packTypes, setPackTypes] = useState([]);
+  const [allPackTypes, setAllPackTypes] = useState([]);
+  const [filteredPackTypes, setFilteredPackTypes] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,6 +49,26 @@ const Packs = () => {
     }
   }, [searchQuery, packs]);
 
+  // Filter pack types when category changes or when modal opens
+  useEffect(() => {
+    if (showModal) {
+      filterPackTypes(formData.categoryId);
+    }
+  }, [formData.categoryId, showModal, allPackTypes]);
+
+  const filterPackTypes = (categoryId) => {
+    if (!categoryId) {
+      // If no category selected, show all pack types (for backward compatibility)
+      setFilteredPackTypes(allPackTypes);
+    } else {
+      // Filter pack types by category (including null categoryId for legacy/global pack types)
+      const filtered = allPackTypes.filter(
+        pt => pt.categoryId === null || pt.categoryId === parseInt(categoryId)
+      );
+      setFilteredPackTypes(filtered);
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -70,7 +91,8 @@ const Packs = () => {
       setPacks(packsRes.data || []);
       setFilteredPacks(packsRes.data || []);
       setCategories(categoriesRes.data || []);
-      setPackTypes(packTypesRes.data || []);
+      setAllPackTypes(packTypesRes.data || []);
+      setFilteredPackTypes(packTypesRes.data || []);
       setProducts(productsRes.data || []);
     } catch (error) {
       console.error('Packs error:', error);
@@ -83,7 +105,7 @@ const Packs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const selectedPackType = packTypes.find(pt => pt.id === parseInt(formData.packTypeId));
+      const selectedPackType = filteredPackTypes.find(pt => pt.id === parseInt(formData.packTypeId));
       const minPrices = {
         'Weekly': 2000,
         'Bi-Weekly': 4000,
@@ -503,6 +525,7 @@ const Packs = () => {
                               setFormData({
                                 ...formData,
                                 categoryId: e.target.value,
+                                packTypeId: '', // Reset pack type when category changes
                               })
                             }
                             required
@@ -549,7 +572,7 @@ const Packs = () => {
                             required
                           >
                             <option value="">Select Pack Type</option>
-                            {packTypes.map((packType) => (
+                            {filteredPackTypes.map((packType) => (
                               <option key={packType.id} value={packType.id}>
                                 {packType.name} (₹{packType.basePrice})
                               </option>

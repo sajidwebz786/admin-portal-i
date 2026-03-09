@@ -132,7 +132,11 @@ export const unitTypeService = {
 
 // Pack Type services
 export const packTypeService = {
-  getAll: () => api.get('/pack-types'),
+  getAll: (categoryId) => {
+    const params = categoryId ? { categoryId } : {};
+    return api.get('/pack-types', { params });
+  },
+  getByCategory: (categoryId) => api.get('/pack-types', { params: { categoryId } }),
   create: (data) => api.post('/pack-types', data),
   update: (id, data) => api.put(`/pack-types/${id}`, data),
   delete: (id) => api.delete(`/pack-types/${id}`),
