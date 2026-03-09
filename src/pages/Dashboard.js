@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { categoryService, productService, packService, orderService, userService } from '../services/api';
+import { categoryService, productService, packService, orderService, userService, notificationService } from '../services/api';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -30,39 +30,60 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const loadNotifications = () => {
-    // Load notifications from localStorage (set by backend or other actions)
-    const storedNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
-    setNotifications(storedNotifications);
-    setUnreadCount(storedNotifications.filter(n => !n.read).length);
+  const loadNotifications = async () => {
+    try {
+      // Load notifications from server API
+      const response = await notificationService.getAll({ limit: 50 });
+      setNotifications(response.data.notifications || []);
+      setUnreadCount(response.data.unreadCount || 0);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      // Fallback to localStorage if API fails
+      const storedNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      setNotifications(storedNotifications);
+      setUnreadCount(storedNotifications.filter(n => !n.read).length);
+    }
   };
 
-  const markNotificationRead = (index) => {
+  const markNotificationRead = async (index) => {
+    const notification = notifications[index];
+    if (notification && notification.id) {
+      try {
+        await notificationService.markAsRead(notification.id);
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+    // Update local state
     const updated = [...notifications];
-    updated[index].read = true;
-    localStorage.setItem('adminNotifications', JSON.stringify(updated));
+    updated[index].isRead = true;
     setNotifications(updated);
-    setUnreadCount(updated.filter(n => !n.read).length);
+    setUnreadCount(updated.filter(n => !n.isRead).length);
   };
 
-  const clearAllNotifications = () => {
-    localStorage.setItem('adminNotifications', '[]');
+  const clearAllNotifications = async () => {
+    try {
+      await notificationService.markAllAsRead();
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
     setNotifications([]);
     setUnreadCount(0);
   };
 
   const addNotification = (type, title, message, details = {}) => {
+    // This function is kept for backwards compatibility with local notifications
+    // New notifications come from the server via loadNotifications
     const newNotification = {
       id: Date.now(),
       type,
       title,
       message,
       details,
-      read: false,
-      timestamp: new Date().toISOString()
+      isRead: false,
+      createdAt: new Date().toISOString()
     };
     const updated = [newNotification, ...notifications];
-    localStorage.setItem('adminNotifications', JSON.stringify(updated));
     setNotifications(updated);
     setUnreadCount(prev => prev + 1);
   };
@@ -335,11 +356,12 @@ const Dashboard = () => {
                         <tr>
                           <th>Order ID</th>
                           <th>Customer</th>
-                          <th>Items (What)</th>
-                          <th>Delivery Address (Where)</th>
-                          <th>Delivery Date (When)</th>
+                          <th>Items</th>
+                          <th>Delivery Address</th>
+                          <th>Delivery Date</th>
                           <th>Status</th>
                           <th>Total</th>
+                          <th>Delivered Date</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -352,14 +374,18 @@ const Dashboard = () => {
                             </td>
                             <td>
                               <div>
-                                <strong>{order.customerName || order.userName || 'N/A'}</strong>
-                                {order.customerPhone && (
-                                  <div className="text-muted small">{order.customerPhone}</div>
+                                <strong>{order.User?.name || order.customerName || order.userName || 'N/A'}</strong>
+                                {order.User?.phone && (
+                                  <div className="text-muted small">{order.User.phone}</div>
                                 )}
                               </div>
                             </td>
                             <td>
-                              {order.items?.map((item, idx) => (
+                              {order.Pack ? (
+                                <div className="small">
+                                  {order.Pack.name} ({order.Pack.PackType?.name})
+                                </div>
+                              ) : order.items?.map((item, idx) => (
                                 <div key={idx} className="small">
                                   {item.quantity}x {item.productName || item.name || item.product}
                                 </div>
@@ -404,6 +430,15 @@ const Dashboard = () => {
                             </td>
                             <td className="font-weight-bold">
                               ₹{order.total?.toFixed(2) || order.amount?.toFixed(2) || '0.00'}
+                            </td>
+                            <td>
+                              {order.status === 'delivered' ? (
+                                <span className="text-success">
+                                  {order.deliveredAt ? formatDeliveryDate(order.deliveredAt) : 'Delivered'}
+                                </span>
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
                             </td>
                           </tr>
                         ))}

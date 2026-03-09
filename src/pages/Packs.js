@@ -5,6 +5,8 @@ import { authService } from '../services/api';
 
 const Packs = () => {
   const [packs, setPacks] = useState([]);
+  const [filteredPacks, setFilteredPacks] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [packTypes, setPackTypes] = useState([]);
   const [products, setProducts] = useState([]);
@@ -28,6 +30,24 @@ const Packs = () => {
     fetchData();
   }, []);
 
+  // Filter packs based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredPacks(packs);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = packs.filter(pack =>
+        pack.name?.toLowerCase().includes(query) ||
+        pack.description?.toLowerCase().includes(query) ||
+        pack.PackType?.name?.toLowerCase().includes(query) ||
+        pack.Category?.name?.toLowerCase().includes(query) ||
+        pack.finalPrice?.toString().includes(query) ||
+        pack.id?.toString().includes(query)
+      );
+      setFilteredPacks(filtered);
+    }
+  }, [searchQuery, packs]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -48,6 +68,7 @@ const Packs = () => {
       });
 
       setPacks(packsRes.data || []);
+      setFilteredPacks(packsRes.data || []);
       setCategories(categoriesRes.data || []);
       setPackTypes(packTypesRes.data || []);
       setProducts(productsRes.data || []);
@@ -304,6 +325,21 @@ const Packs = () => {
               <div className="card-header">
                 <h3 className="card-title">Manage Packs</h3>
                 <div className="card-tools">
+                  <div className="input-group input-group-sm" style={{ width: '250px', marginRight: '10px' }}>
+                    <input
+                      type="text"
+                      name="table_search"
+                      className="form-control float-right"
+                      placeholder="Search packs..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className="input-group-append">
+                      <button type="submit" className="btn btn-default">
+                        <i className="fas fa-search"></i>
+                      </button>
+                    </div>
+                  </div>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={handleAddNew}
@@ -328,7 +364,7 @@ const Packs = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {packs.map((pack) => (
+                      {filteredPacks.map((pack) => (
                         <tr key={pack.id}>
                           <td>{pack.id}</td>
                           <td>{pack.name}</td>
@@ -403,7 +439,7 @@ const Packs = () => {
 
                 {packs.length === 0 && (
                   <div className="text-center py-4">
-                    <p>No packs found. Add your first pack to get started.</p>
+                    <p>{searchQuery ? 'No packs found matching your search.' : 'No packs found. Add your first pack to get started.'}</p>
                   </div>
                 )}
               </div>

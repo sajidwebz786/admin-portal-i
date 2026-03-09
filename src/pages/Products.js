@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { productService, categoryService, unitTypeService } from '../services/api';
+import { productService, categoryService, unitTypeService, notificationService } from '../services/api';
 import { authService } from '../services/api';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [unitTypes, setUnitTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,23 @@ const Products = () => {
     fetchData();
   }, []);
 
+  // Filter products based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = products.filter(product =>
+        product.name?.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query) ||
+        product.Category?.name?.toLowerCase().includes(query) ||
+        product.price?.toString().includes(query) ||
+        product.id?.toString().includes(query)
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchQuery, products]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -39,6 +58,7 @@ const Products = () => {
       ]);
 
       setProducts(productsRes.data || []);
+      setFilteredProducts(productsRes.data || []);
       setCategories(categoriesRes.data || []);
       setUnitTypes(unitTypesRes.data || []);
     } catch (error) {
@@ -112,27 +132,21 @@ const Products = () => {
         }
       }
     } else {
-      // Staff members need admin approval for deletion
+      // Staff members need admin approval for deletion - send to server
       if (window.confirm('This will send a deletion request to the admin for approval. Continue?')) {
         try {
-          // Create deletion request notification for admin
-          const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
           const product = products.find(p => p.id === id || p._id === id);
-          const newNotification = {
-            id: Date.now(),
+          
+          // Send deletion request to server
+          await notificationService.create({
             type: 'product_deletion_request',
             title: 'Product Deletion Request',
             message: `${adminUser.name || 'A staff member'} requested to delete product: ${product?.name || 'Unknown'}`,
-            details: { 
-              productId: id, 
-              productName: product?.name,
-              requestedBy: adminUser.name || adminUser.email,
-              requestedAt: new Date().toISOString()
-            },
-            read: false,
-            timestamp: new Date().toISOString()
-          };
-          localStorage.setItem('adminNotifications', JSON.stringify([newNotification, ...notifications]));
+            referenceId: id,
+            referenceType: 'product',
+            priority: 'high',
+            actionRequired: true
+          });
           
           alert('Deletion request sent to admin for approval!');
           fetchData();
@@ -208,6 +222,21 @@ const Products = () => {
           <div className="card-header">
             <h3 className="card-title">Manage Products</h3>
             <div className="card-tools">
+              <div className="input-group input-group-sm" style={{ width: '250px', marginRight: '10px' }}>
+                <input
+                  type="text"
+                  name="table_search"
+                  className="form-control float-right"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <div className="input-group-append">
+                  <button type="submit" className="btn btn-default">
+                    <i className="fas fa-search"></i>
+                  </button>
+                </div>
+              </div>
               <button className="btn btn-primary btn-sm" onClick={handleAddNew}>
                 <i className="fas fa-plus"></i> Add Product
               </button>
@@ -232,7 +261,7 @@ const Products = () => {
               </thead>
 
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id}>
                     <td>{product.id}</td>
                     <td>{product.name}</td>
@@ -282,8 +311,8 @@ const Products = () => {
               </tbody>
             </table>
 
-            {products.length === 0 && (
-              <div className="text-center py-4">No products found.</div>
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-4">{searchQuery ? 'No products found matching your search.' : 'No products found.'}</div>
             )}
           </div>
         </div>

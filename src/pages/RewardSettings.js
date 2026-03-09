@@ -7,7 +7,7 @@ const RewardSettings = () => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [settings, setSettings] = useState({
     rewardPointsEnabled: false,
-    pointsPerDollar: 1,
+    pointsPerRupee: 1,
     signupBonusPoints: 0,
     referralBonusPoints: 0,
     minRedemptionPoints: 100,
@@ -179,18 +179,18 @@ const RewardSettings = () => {
                 <div className="row">
                   <div className="col-md-6">
                     <div className="form-group">
-                      <label>Points Per Dollar Spent</label>
+                      <label>Points Per Rupee (INR) Spent</label>
                       <input
                         type="number"
                         className="form-control"
-                        name="pointsPerDollar"
-                        value={settings.pointsPerDollar}
+                        name="pointsPerRupee"
+                        value={settings.pointsPerRupee}
                         onChange={handleInputChange}
                         min="0"
                         step="0.1"
                         disabled={!settings.rewardPointsEnabled}
                       />
-                      <small className="text-muted">Number of points earned for every ₹1 spent</small>
+                      <small className="text-muted">Number of points earned for every ₹1 (One Rupee) spent</small>
                     </div>
                   </div>
                   <div className="col-md-6">

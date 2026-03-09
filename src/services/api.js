@@ -192,6 +192,16 @@ export const orderService = {
     api.patch(`/orders/${id}/status`, { status }),
 };
 
+// Notification services
+export const notificationService = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  create: (data) => api.post('/notifications', data),
+};
+
 // Payment services
 export const paymentService = {
   getAll: () => api.get('/payments'),

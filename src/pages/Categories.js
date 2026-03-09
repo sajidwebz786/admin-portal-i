@@ -5,6 +5,8 @@ import { authService } from '../services/api';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -20,6 +22,21 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
+  // Filter categories based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredCategories(categories);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = categories.filter(category =>
+        category.name?.toLowerCase().includes(query) ||
+        category.description?.toLowerCase().includes(query) ||
+        category.id?.toString().includes(query)
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [searchQuery, categories]);
+
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -30,6 +47,7 @@ const Categories = () => {
       console.log('Categories data received:', response.data?.length || 0);
 
       setCategories(response.data || []);
+      setFilteredCategories(response.data || []);
     } catch (error) {
       console.error('Categories error:', error);
       setError(`Failed to load categories: ${error.message}`);
@@ -223,6 +241,21 @@ const Categories = () => {
               <div className="card-header">
                 <h3 className="card-title">Manage Categories</h3>
                 <div className="card-tools">
+                  <div className="input-group input-group-sm" style={{ width: '250px', marginRight: '10px' }}>
+                    <input
+                      type="text"
+                      name="table_search"
+                      className="form-control float-right"
+                      placeholder="Search categories..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <div className="input-group-append">
+                      <button type="submit" className="btn btn-default">
+                        <i className="fas fa-search"></i>
+                      </button>
+                    </div>
+                  </div>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={handleAddNew}
@@ -246,7 +279,7 @@ const Categories = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {categories.map((category) => (
+                      {filteredCategories.map((category) => (
                         <tr key={category.id}>
                           <td>{category.id}</td>
                           <td>{category.name}</td>
@@ -302,7 +335,7 @@ const Categories = () => {
 
                 {categories.length === 0 && (
                   <div className="text-center py-4">
-                    <p>No categories found. Add your first category to get started.</p>
+                    <p>{searchQuery ? 'No categories found matching your search.' : 'No categories found. Add your first category to get started.'}</p>
                   </div>
                 )}
               </div>
