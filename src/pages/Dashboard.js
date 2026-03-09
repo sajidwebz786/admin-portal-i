@@ -402,7 +402,9 @@ const Dashboard = () => {
                                 </div>
                               ) : order.deliveryAddress ? (
                                 <div className="small">
-                                  {order.deliveryAddress.address}, {order.deliveryAddress.city}
+                                  {typeof order.deliveryAddress === 'object' 
+                                    ? `${order.deliveryAddress.address}, ${order.deliveryAddress.city}` 
+                                    : order.deliveryAddress}
                                 </div>
                               ) : (
                                 <span className="text-muted">Address not available</span>

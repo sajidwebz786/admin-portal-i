@@ -106,6 +106,7 @@ const Orders = () => {
                         <th>Order ID</th>
                         <th>Customer</th>
                         <th>Items</th>
+                        <th>Delivery Address</th>
                         <th>Total Amount</th>
                         <th>Status</th>
                         <th>Order Date</th>
@@ -117,7 +118,7 @@ const Orders = () => {
                     <tbody>
                       {orders.length === 0 ? (
                         <tr>
-                          <td colSpan="9" className="text-center">
+                          <td colSpan="10" className="text-center">
                             No orders found. Orders will appear here when customers place them.
                           </td>
                         </tr>
@@ -127,6 +128,7 @@ const Orders = () => {
                             <td>#{order.id}</td>
                             <td>{order.User ? order.User.name : 'N/A'}</td>
                             <td>{order.quantity || 1} items</td>
+                            <td>{order.deliveryAddress || 'N/A'}</td>
                             <td>₹{order.totalAmount || 0}</td>
                             <td>
                               <select
