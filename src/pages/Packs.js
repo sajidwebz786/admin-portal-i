@@ -106,12 +106,15 @@ const Packs = () => {
     e.preventDefault();
     try {
       const selectedPackType = filteredPackTypes.find(pt => pt.id === parseInt(formData.packTypeId));
+      
+      // Minimum prices based on pack duration (size)
       const minPrices = {
-        'Weekly': 2000,
-        'Bi-Weekly': 4000,
-        'Monthly': 7000
+        'small': 2000,
+        'medium': 3500,
+        'large': 6000,
+        'custom': 2000
       };
-      const minPrice = minPrices[selectedPackType?.name] || 0;
+      const minPrice = minPrices[selectedPackType?.duration] || 2000;
       const calculatedPrice = parseFloat(formData.finalPrice);
 
       if (calculatedPrice < minPrice) {
@@ -137,14 +140,31 @@ const Packs = () => {
       // Save selected products if any
       if (selectedProducts.length > 0) {
         try {
+          // First delete existing pack products if editing
+          if (editingPack) {
+            await packProductService.deleteByPackId(editingPack.id);
+          }
           await packProductService.createBulk({
             packId: savedPack.data.id,
             products: selectedProducts
           });
         } catch (error) {
           console.error('Error saving pack products:', error);
-          setError('Failed to save pack products');
+          // Pack was saved successfully, but products failed - show warning but don't fail
+          setShowModal(false);
+          setEditingPack(null);
+          resetForm();
+          fetchData();
+          // Show a warning that pack was saved but products need attention
+          alert('Pack saved successfully, but there was an issue saving the products. Please edit the pack to update products.');
           return;
+        }
+      } else if (editingPack && selectedProducts.length === 0) {
+        // If editing and no products selected, delete all existing products
+        try {
+          await packProductService.deleteByPackId(editingPack.id);
+        } catch (error) {
+          console.error('Error deleting pack products:', error);
         }
       }
 
@@ -153,7 +173,8 @@ const Packs = () => {
       resetForm();
       fetchData();
     } catch (error) {
-      setError('Failed to save pack');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to save pack';
+      setError(errorMessage);
       console.error('Save error:', error);
     }
   };
@@ -254,10 +275,15 @@ const Packs = () => {
   };
 
   const handleProductPriceChange = (productId, unitPrice) => {
+    // Don't allow empty or zero unit price
+    const parsedPrice = parseFloat(unitPrice);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return; // Keep the existing value
+    }
     setSelectedProducts(prev =>
       prev.map(p =>
         p.productId === productId
-          ? { ...p, unitPrice: parseFloat(unitPrice) || 0 }
+          ? { ...p, unitPrice: parsedPrice }
           : p
       )
     );
