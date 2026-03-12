@@ -13,6 +13,17 @@ const Packs = () => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPack, setEditingPack] = useState(null);
+
+  // Scroll to top when modal opens
+  useEffect(() => {
+    if (showModal) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const modalContent = document.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }
+  }, [showModal]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -96,13 +107,27 @@ const Packs = () => {
       // Save selected products if any
       if (selectedProducts.length > 0) {
         try {
+          // Validate all products have valid unitPrice
+          const validProducts = selectedProducts.map(p => ({
+            ...p,
+            unitPrice: parseFloat(p.unitPrice) || p.unitPrice || 0,
+            quantity: parseInt(p.quantity) || 1
+          }));
+
+          // Check if any product has invalid unitPrice
+          const invalidProducts = validProducts.filter(p => !p.unitPrice || p.unitPrice <= 0);
+          if (invalidProducts.length > 0) {
+            setError('All products must have a valid unit price greater than 0');
+            return;
+          }
+
           // First delete existing pack products if editing
           if (editingPack) {
             await packProductService.deleteByPackId(editingPack.id);
           }
           await packProductService.createBulk({
             packId: savedPack.data.id,
-            products: selectedProducts
+            products: validProducts
           });
         } catch (error) {
           console.error('Error saving pack products:', error);
@@ -127,6 +152,16 @@ const Packs = () => {
       setShowModal(false);
       setEditingPack(null);
       resetForm();
+      // Scroll to the updated pack row
+      const packId = savedPack.data.id;
+      setTimeout(() => {
+        const packRow = document.getElementById(`pack-row-${packId}`);
+        if (packRow) {
+          packRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          packRow.classList.add('bg-success');
+          setTimeout(() => packRow.classList.remove('bg-success'), 2000);
+        }
+      }, 100);
       fetchData();
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.message || 'Failed to save pack';
@@ -366,7 +401,7 @@ const Packs = () => {
                     </thead>
                     <tbody>
                       {filteredPacks.map((pack) => (
-                        <tr key={pack.id}>
+                        <tr key={pack.id} id={`pack-row-${pack.id}`}>
                           <td>{pack.id}</td>
                           <td>{pack.name}</td>
                           <td>
@@ -591,7 +626,6 @@ const Packs = () => {
                       <div className="border rounded p-3" style={{maxHeight: '300px', overflowY: 'auto'}}>
                         <div className="row">
                           {products
-                            .filter(product => !formData.categoryId || product.categoryId === parseInt(formData.categoryId))
                             .map((product) => {
                               const isSelected = selectedProducts.some(p => p.productId === product.id);
                               const selectedProduct = selectedProducts.find(p => p.productId === product.id);
