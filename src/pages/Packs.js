@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { packService, categoryService, packTypeService, productService, packProductService } from '../services/api';
+import { packService, categoryService, productService, packProductService } from '../services/api';
 import { authService } from '../services/api';
 
 const Packs = () => {
@@ -8,8 +8,6 @@ const Packs = () => {
   const [filteredPacks, setFilteredPacks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
-  const [allPackTypes, setAllPackTypes] = useState([]);
-  const [filteredPackTypes, setFilteredPackTypes] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,7 +17,6 @@ const Packs = () => {
     name: '',
     description: '',
     categoryId: '',
-    packTypeId: '',
     basePrice: '0',
     finalPrice: '',
     validFrom: '',
@@ -40,7 +37,6 @@ const Packs = () => {
       const filtered = packs.filter(pack =>
         pack.name?.toLowerCase().includes(query) ||
         pack.description?.toLowerCase().includes(query) ||
-        pack.PackType?.name?.toLowerCase().includes(query) ||
         pack.Category?.name?.toLowerCase().includes(query) ||
         pack.finalPrice?.toString().includes(query) ||
         pack.id?.toString().includes(query)
@@ -74,25 +70,21 @@ const Packs = () => {
       setLoading(true);
       setError('');
 
-      const [packsRes, categoriesRes, packTypesRes, productsRes] = await Promise.all([
+      const [packsRes, categoriesRes, productsRes] = await Promise.all([
         packService.getAll(),
         categoryService.getAll(),
-        packTypeService.getAll(),
         productService.getAll(),
       ]);
 
       console.log('Packs data received:', {
         packs: packsRes.data?.length || 0,
         categories: categoriesRes.data?.length || 0,
-        packTypes: packTypesRes.data?.length || 0,
         products: productsRes.data?.length || 0,
       });
 
       setPacks(packsRes.data || []);
       setFilteredPacks(packsRes.data || []);
       setCategories(categoriesRes.data || []);
-      setAllPackTypes(packTypesRes.data || []);
-      setFilteredPackTypes(packTypesRes.data || []);
       setProducts(productsRes.data || []);
     } catch (error) {
       console.error('Packs error:', error);
@@ -105,29 +97,13 @@ const Packs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const selectedPackType = filteredPackTypes.find(pt => pt.id === parseInt(formData.packTypeId));
-      
-      // Minimum prices based on pack duration (size)
-      const minPrices = {
-        'small': 2000,
-        'medium': 3500,
-        'large': 6000,
-        'custom': 2000
-      };
-      const minPrice = minPrices[selectedPackType?.duration] || 2000;
       const calculatedPrice = parseFloat(formData.finalPrice);
-
-      if (calculatedPrice < minPrice) {
-        setError(`Pack price must be at least ₹${minPrice} for ${selectedPackType?.name} packs`);
-        return;
-      }
 
       const packData = {
         ...formData,
         basePrice: parseFloat(formData.basePrice),
         finalPrice: calculatedPrice,
         categoryId: parseInt(formData.categoryId),
-        packTypeId: parseInt(formData.packTypeId),
       };
 
       let savedPack;
@@ -199,7 +175,6 @@ const Packs = () => {
         name: pack.name,
         description: pack.description || '',
         categoryId: pack.categoryId?.toString() || '',
-        packTypeId: pack.packTypeId?.toString() || '',
         basePrice: calculatedBasePrice.toFixed(2),
         finalPrice: calculatedBasePrice.toFixed(2),
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
@@ -212,7 +187,6 @@ const Packs = () => {
         name: pack.name,
         description: pack.description || '',
         categoryId: pack.categoryId?.toString() || '',
-        packTypeId: pack.packTypeId?.toString() || '',
         basePrice: pack.basePrice?.toString() || '0',
         finalPrice: pack.finalPrice?.toString() || pack.basePrice?.toString() || '0',
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
@@ -240,7 +214,6 @@ const Packs = () => {
       name: '',
       description: '',
       categoryId: '',
-      packTypeId: '',
       basePrice: '0',
       finalPrice: '0',
       validFrom: '',
@@ -551,7 +524,6 @@ const Packs = () => {
                               setFormData({
                                 ...formData,
                                 categoryId: e.target.value,
-                                packTypeId: '', // Reset pack type when category changes
                               })
                             }
                             required
@@ -583,29 +555,6 @@ const Packs = () => {
                     </div>
 
                     <div className="row">
-                      <div className="col-md-6">
-                        <div className="form-group">
-                          <label>Pack Type *</label>
-                          <select
-                            className="form-control"
-                            value={formData.packTypeId}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                packTypeId: e.target.value,
-                              })
-                            }
-                            required
-                          >
-                            <option value="">Select Pack Type</option>
-                            {filteredPackTypes.map((packType) => (
-                              <option key={packType.id} value={packType.id}>
-                                {packType.name} (₹{packType.basePrice})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
                       <div className="col-md-6">
                         <div className="form-group">
                           <label>Pack Price *</label>
