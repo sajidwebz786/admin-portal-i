@@ -45,26 +45,6 @@ const Packs = () => {
     }
   }, [searchQuery, packs]);
 
-  // Filter pack types when category changes or when modal opens
-  useEffect(() => {
-    if (showModal) {
-      filterPackTypes(formData.categoryId);
-    }
-  }, [formData.categoryId, showModal, allPackTypes]);
-
-  const filterPackTypes = (categoryId) => {
-    if (!categoryId) {
-      // If no category selected, show all pack types (for backward compatibility)
-      setFilteredPackTypes(allPackTypes);
-    } else {
-      // Filter pack types by category (including null categoryId for legacy/global pack types)
-      const filtered = allPackTypes.filter(
-        pt => pt.categoryId === null || pt.categoryId === parseInt(categoryId)
-      );
-      setFilteredPackTypes(filtered);
-    }
-  };
-
   const fetchData = async () => {
     try {
       setLoading(true);
