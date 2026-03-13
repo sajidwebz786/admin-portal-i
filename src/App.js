@@ -9,6 +9,7 @@ import Categories from './pages/Categories';
 import Products from './pages/Products';
 import Packs from './pages/Packs';
 import PackTypes from './pages/PackTypes';
+import UnitTypes from './pages/UnitTypes';
 import Checkout from './pages/Checkout';
 import Customers from './pages/Customers';
 import Orders from './pages/Orders';
@@ -86,6 +87,14 @@ function App() {
                     element={
                       <ProtectedRoute requiredPermission="canManagePacks">
                         <PackTypes />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/unit-types" 
+                    element={
+                      <ProtectedRoute requiredPermission="canManageProducts">
+                        <UnitTypes />
                       </ProtectedRoute>
                     } 
                   />
