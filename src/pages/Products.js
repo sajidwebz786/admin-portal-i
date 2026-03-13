@@ -57,8 +57,12 @@ const Products = () => {
         unitTypeService.getAll(),
       ]);
 
-      setProducts(productsRes.data || []);
-      setFilteredProducts(productsRes.data || []);
+      // Ensure product list order stays consistent after updates (e.g., image uploads)
+      // by sorting on a stable attribute (id) rather than relying on server ordering.
+      const sortedProducts = (productsRes.data || []).slice().sort((a, b) => a.id - b.id);
+
+      setProducts(sortedProducts);
+      setFilteredProducts(sortedProducts);
       setCategories(categoriesRes.data || []);
       setUnitTypes(unitTypesRes.data || []);
     } catch (error) {
