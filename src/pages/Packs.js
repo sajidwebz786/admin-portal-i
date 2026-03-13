@@ -114,7 +114,16 @@ const Packs = () => {
       setPacks(sortedPacks);
       setFilteredPacks(sortedPacks);
       setCategories(categoriesRes.data || []);
-      setProducts(productsRes.data || []);
+
+      // Sort products by categoryId, then by id to maintain consistent order
+      const sortedProducts = (productsRes.data || []).sort((a, b) => {
+        if (a.categoryId !== b.categoryId) {
+          return a.categoryId - b.categoryId;
+        }
+        return a.id - b.id;
+      });
+
+      setProducts(sortedProducts);
     } catch (error) {
       console.error('Packs error:', error);
       setError(`Failed to load data: ${error.message}`);
