@@ -56,6 +56,13 @@ const Packs = () => {
     }
   }, [searchQuery, packs]);
 
+  // Clear selected products when category changes (unless editing)
+  useEffect(() => {
+    if (!editingPack && formData.categoryId) {
+      setSelectedProducts([]);
+    }
+  }, [formData.categoryId, editingPack]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -73,8 +80,16 @@ const Packs = () => {
         products: productsRes.data?.length || 0,
       });
 
-      setPacks(packsRes.data || []);
-      setFilteredPacks(packsRes.data || []);
+      // Sort packs by categoryId, then by id
+      const sortedPacks = (packsRes.data || []).sort((a, b) => {
+        if (a.categoryId !== b.categoryId) {
+          return a.categoryId - b.categoryId;
+        }
+        return a.id - b.id;
+      });
+
+      setPacks(sortedPacks);
+      setFilteredPacks(sortedPacks);
       setCategories(categoriesRes.data || []);
       setProducts(productsRes.data || []);
     } catch (error) {
@@ -624,9 +639,15 @@ const Packs = () => {
                     <div className="form-group">
                       <label>Add Products to Pack</label>
                       <div className="border rounded p-3" style={{maxHeight: '300px', overflowY: 'auto'}}>
-                        <div className="row">
-                          {products
-                            .map((product) => {
+                        {formData.categoryId ? (
+                          <>
+                            <div className="mb-2 text-muted small">
+                              Showing products for: {categories.find(c => c.id === parseInt(formData.categoryId))?.name}
+                            </div>
+                            <div className="row">
+                              {products
+                                .filter(product => product.categoryId === parseInt(formData.categoryId))
+                                .map((product) => {
                               const isSelected = selectedProducts.some(p => p.productId === product.id);
                               const selectedProduct = selectedProducts.find(p => p.productId === product.id);
 
@@ -687,7 +708,14 @@ const Packs = () => {
                                 </div>
                               );
                             })}
-                        </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-center text-muted py-4">
+                            <i className="fas fa-info-circle mr-2"></i>
+                            Please select a category to view available products
+                          </div>
+                        )}
 
                         {selectedProducts.length > 0 && (
                           <div className="mt-3 pt-3 border-top">

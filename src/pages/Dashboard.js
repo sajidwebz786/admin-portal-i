@@ -501,43 +501,69 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Data Overview */}
             <div className="col-md-6">
               <div className="card">
                 <div className="card-header">
-                  <h3 className="card-title">Quick Actions</h3>
+                  <h3 className="card-title">Data Overview</h3>
                 </div>
                 <div className="card-body">
                   <div className="row">
                     <div className="col-6 mb-2">
-                      <Link to="/categories" className="btn btn-block btn-info btn-sm">
-                        <i className="fas fa-th mr-1"></i> Categories
-                      </Link>
+                      <div className="small-box" style={{background: '#17a2b8'}}>
+                        <div className="inner">
+                          <p>Categories</p>
+                          <h4>{stats.categories}</h4>
+                        </div>
+                        <div className="icon">
+                          <i className="fas fa-th"></i>
+                        </div>
+                        <Link to="/categories" className="small-box-footer">
+                          View <i className="fas fa-arrow-circle-right"></i>
+                        </Link>
+                      </div>
                     </div>
                     <div className="col-6 mb-2">
-                      <Link to="/products" className="btn btn-block btn-success btn-sm">
-                        <i className="fas fa-box mr-1"></i> Products
-                      </Link>
+                      <div className="small-box" style={{background: '#28a745'}}>
+                        <div className="inner">
+                          <p>Products</p>
+                          <h4>{stats.products}</h4>
+                        </div>
+                        <div className="icon">
+                          <i className="fas fa-box"></i>
+                        </div>
+                        <Link to="/products" className="small-box-footer">
+                          View <i className="fas fa-arrow-circle-right"></i>
+                        </Link>
+                      </div>
                     </div>
                     <div className="col-6 mb-2">
-                      <Link to="/packs" className="btn btn-block btn-warning btn-sm">
-                        <i className="fas fa-cubes mr-1"></i> Packs
-                      </Link>
+                      <div className="small-box" style={{background: '#ffc107'}}>
+                        <div className="inner">
+                          <p>Packs</p>
+                          <h4>{stats.packs}</h4>
+                        </div>
+                        <div className="icon">
+                          <i className="fas fa-cubes"></i>
+                        </div>
+                        <Link to="/packs" className="small-box-footer">
+                          View <i className="fas fa-arrow-circle-right"></i>
+                        </Link>
+                      </div>
                     </div>
                     <div className="col-6 mb-2">
-                      <Link to="/orders" className="btn btn-block btn-primary btn-sm">
-                        <i className="fas fa-shopping-cart mr-1"></i> Orders
-                      </Link>
-                    </div>
-                    <div className="col-6 mb-2">
-                      <Link to="/users" className="btn btn-block btn-secondary btn-sm">
-                        <i className="fas fa-user-cog mr-1"></i> Staff
-                      </Link>
-                    </div>
-                    <div className="col-6 mb-2">
-                      <Link to="/reward-settings" className="btn btn-block btn-danger btn-sm">
-                        <i className="fas fa-gift mr-1"></i> Rewards
-                      </Link>
+                      <div className="small-box" style={{background: '#007bff'}}>
+                        <div className="inner">
+                          <p>Orders</p>
+                          <h4>{stats.orders}</h4>
+                        </div>
+                        <div className="icon">
+                          <i className="fas fa-shopping-cart"></i>
+                        </div>
+                        <Link to="/orders" className="small-box-footer">
+                          View <i className="fas fa-arrow-circle-right"></i>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>

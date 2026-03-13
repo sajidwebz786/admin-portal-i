@@ -1,7 +1,7 @@
 /* Custom styles for the admin portal */
 body {
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 13px !important; /* Further reduce overall font size */
+  font-size: 11px !important; /* Reduced overall font size by 2px */
   line-height: 1.4;
 }
 
