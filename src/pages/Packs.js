@@ -344,6 +344,26 @@ const Packs = () => {
     setShowModal(true);
   };
 
+  const handleResetAllPacks = async () => {
+    if (!window.confirm('⚠️ WARNING: This will DELETE ALL packs, pack-products, and pack types! This action cannot be undone. Are you sure you want to continue?')) {
+      return;
+    }
+    if (!window.confirm('⚠️ FINAL WARNING: All packs will be permanently deleted and pack IDs will restart from 1. Continue?')) {
+      return;
+    }
+    try {
+      setLoading(true);
+      await packService.resetAll();
+      alert('All packs have been reset successfully. You can now add packs starting from ID 1.');
+      fetchData();
+    } catch (error) {
+      setError('Failed to reset packs: ' + (error.response?.data?.message || error.message));
+      console.error('Reset error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Redirect if not authenticated
   if (!authService.isAuthenticated()) {
@@ -423,6 +443,14 @@ const Packs = () => {
                       </button>
                     </div>
                   </div>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleResetAllPacks}
+                    style={{ marginRight: '10px' }}
+                    title="Delete all packs and reset IDs to start from 1"
+                  >
+                    <i className="fas fa-trash-alt"></i> Reset All
+                  </button>
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={handleAddNew}

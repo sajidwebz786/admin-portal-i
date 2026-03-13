@@ -151,6 +151,7 @@ export const packService = {
   update: (id, data) => api.put(`/packs/${id}`, data),
   delete: (id) => api.delete(`/packs/${id}`),
   updatePrice: (id, price) => api.patch(`/packs/${id}/price`, { price }),
+  resetAll: () => api.post('/admin/reset-packs-only'),
 };
 
 // Pack Product services
