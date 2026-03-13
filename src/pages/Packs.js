@@ -9,6 +9,7 @@ const Packs = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -56,12 +57,34 @@ const Packs = () => {
     }
   }, [searchQuery, packs]);
 
-  // Clear selected products when category changes (unless editing)
+  // Ensure selected products always match the selected category.
+  // If the category changes, drop selections that no longer belong to the chosen category.
   useEffect(() => {
-    if (!editingPack && formData.categoryId) {
+    if (!formData.categoryId) {
       setSelectedProducts([]);
+      return;
     }
-  }, [formData.categoryId, editingPack]);
+
+    const categoryIdNum = parseInt(formData.categoryId);
+    setSelectedProducts((prevSelected) =>
+      prevSelected.filter((selected) => {
+        const product = products.find((p) => p.id === selected.productId);
+        return product?.categoryId === categoryIdNum;
+      })
+    );
+  }, [formData.categoryId, products]);
+
+  // Maintain a filtered product list based on the chosen category (for the selection UI)
+  useEffect(() => {
+    const categoryIdNum = parseInt(formData.categoryId);
+    if (!categoryIdNum) {
+      setFilteredProducts([]);
+      return;
+    }
+
+    const filtered = products.filter((product) => product.categoryId === categoryIdNum);
+    setFilteredProducts(filtered);
+  }, [formData.categoryId, products]);
 
   const fetchData = async () => {
     try {
@@ -645,69 +668,92 @@ const Packs = () => {
                               Showing products for: {categories.find(c => c.id === parseInt(formData.categoryId))?.name}
                             </div>
                             <div className="row">
-                              {products
-                                .filter(product => product.categoryId === parseInt(formData.categoryId))
-                                .map((product) => {
-                              const isSelected = selectedProducts.some(p => p.productId === product.id);
-                              const selectedProduct = selectedProducts.find(p => p.productId === product.id);
+                              {filteredProducts.length > 0 ? (
+                                filteredProducts.map((product) => {
+                                  const isSelected = selectedProducts.some(p => p.productId === product.id);
+                                  const selectedProduct = selectedProducts.find(p => p.productId === product.id);
 
-                              return (
-                                <div key={product.id} className="col-md-6 mb-3">
-                                  <div className={`card ${isSelected ? 'border-primary' : ''}`}>
-                                    <div className="card-body p-2">
-                                      <div className="d-flex align-items-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={isSelected}
-                                          onChange={() => handleProductToggle(product)}
-                                          className="mr-2"
-                                        />
-                                        <div className="flex-grow-1">
-                                          <small className="font-weight-bold d-block">{product.name}</small>
-                                          <small className="text-muted">₹{product.price} per {product.UnitType?.abbreviation || 'unit'}</small>
-                                        </div>
-                                      </div>
+                                  return (
+                                    <div key={product.id} className="col-md-6 mb-3">
+                                      <div className={`card ${isSelected ? 'border-primary shadow-sm' : 'shadow-sm'}`}>
+                                        <div className="card-body p-3 d-flex align-items-start">
+                                          <div className="custom-control custom-checkbox mr-3" style={{ flexShrink: 0 }}>
+                                            <input
+                                              type="checkbox"
+                                              className="custom-control-input"
+                                              id={`product-checkbox-${product.id}`}
+                                              checked={isSelected}
+                                              onChange={() => handleProductToggle(product)}
+                                            />
+                                            <label
+                                              className="custom-control-label"
+                                              htmlFor={`product-checkbox-${product.id}`}
+                                            />
+                                          </div>
+                                          <div className="flex-grow-1">
+                                            <div className="d-flex align-items-start">
+                                              {product.image && (
+                                                <img
+                                                  src={product.image}
+                                                  alt={product.name}
+                                                  style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, marginRight: 12 }}
+                                                />
+                                              )}
+                                              <div>
+                                                <div className="font-weight-bold">{product.name}</div>
+                                                <div className="text-muted small">
+                                                  ₹{product.price} per {product.UnitType?.abbreviation || 'unit'}
+                                                </div>
+                                              </div>
+                                            </div>
 
-                                      {isSelected && (
-                                        <div className="mt-2">
-                                          <div className="row">
-                                            <div className="col-4">
-                                              <input
-                                                type="number"
-                                                className="form-control form-control-sm"
-                                                placeholder="Qty"
-                                                value={selectedProduct.quantity}
-                                                onChange={(e) => handleProductQuantityChange(product.id, e.target.value)}
-                                                min="1"
-                                              />
-                                            </div>
-                                            <div className="col-6">
-                                              <input
-                                                type="number"
-                                                step="0.01"
-                                                className="form-control form-control-sm"
-                                                placeholder="Unit Price"
-                                                value={selectedProduct.unitPrice}
-                                                onChange={(e) => handleProductPriceChange(product.id, e.target.value)}
-                                              />
-                                            </div>
-                                            <div className="col-2">
-                                              <button
-                                                type="button"
-                                                className="btn btn-sm btn-outline-danger"
-                                                onClick={() => removeProductFromPack(product.id)}
-                                              >
-                                                ×
-                                              </button>
-                                            </div>
+                                            {isSelected && (
+                                              <div className="mt-3">
+                                                <div className="row">
+                                                  <div className="col-5">
+                                                    <input
+                                                      type="number"
+                                                      className="form-control form-control-sm"
+                                                      placeholder="Qty"
+                                                      value={selectedProduct.quantity}
+                                                      onChange={(e) => handleProductQuantityChange(product.id, e.target.value)}
+                                                      min="1"
+                                                    />
+                                                  </div>
+                                                  <div className="col-5">
+                                                    <input
+                                                      type="number"
+                                                      step="0.01"
+                                                      className="form-control form-control-sm"
+                                                      placeholder="Unit Price"
+                                                      value={selectedProduct.unitPrice}
+                                                      onChange={(e) => handleProductPriceChange(product.id, e.target.value)}
+                                                    />
+                                                  </div>
+                                                  <div className="col-2 d-flex justify-content-end">
+                                                    <button
+                                                      type="button"
+                                                      className="btn btn-sm btn-outline-danger"
+                                                      onClick={() => removeProductFromPack(product.id)}
+                                                    >
+                                                      ×
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
                                         </div>
-                                      )}
+                                      </div>
                                     </div>
-                                  </div>
+                                  );
+                                })
+                              ) : (
+                                <div className="col-12 text-center py-4 text-muted">
+                                  <i className="fas fa-info-circle mr-2"></i>
+                                  No products found for this category.
                                 </div>
-                              );
-                            })}
+                              )}
                             </div>
                           </>
                         ) : (
