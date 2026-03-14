@@ -142,6 +142,7 @@ const Packs = () => {
 
       const packData = {
         ...formData,
+        isActive: true,  // Always set new packs as active
         basePrice: parseFloat(formData.basePrice),
         finalPrice: calculatedPrice,
         categoryId: parseInt(formData.categoryId),
