@@ -343,29 +343,31 @@ const CustomerAddresses = () => {
                               )}
                             </td>
                             <td>
-                              {!addr.isDefault && (
+                              <div className="action-buttons">
+                                {!addr.isDefault && (
+                                  <button
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleSetDefault(addr)}
+                                    title="Set as Default"
+                                  >
+                                    <i className="fas fa-check-circle"></i>
+                                  </button>
+                                )}
                                 <button
-                                  className="btn btn-success btn-sm mr-1"
-                                  onClick={() => handleSetDefault(addr)}
-                                  title="Set as Default"
+                                  className="btn btn-sm btn-info"
+                                  onClick={() => handleEdit(addr)}
+                                  title="Edit"
                                 >
-                                  <i className="fas fa-check-circle"></i>
+                                  <i className="fas fa-edit"></i>
                                 </button>
-                              )}
-                              <button
-                                className="btn btn-info btn-sm mr-1"
-                                onClick={() => handleEdit(addr)}
-                                title="Edit"
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => handleDelete(addr.id)}
-                                title="Delete"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => handleDelete(addr.id)}
+                                  title="Delete"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

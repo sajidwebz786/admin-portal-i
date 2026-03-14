@@ -1,7 +1,7 @@
-/* Custom styles for the admin portal */
+/* Custom styles for the admin portal - Professional Blue Theme */
 body {
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 11px !important; /* Reduced overall font size by 2px */
+  font-size: 11px !important;
   line-height: 1.4;
 }
 
@@ -18,20 +18,23 @@ body {
   flex: 1;
 }
 
-/* Sidebar styles */
+/* Sidebar styles - Professional Blue Theme */
 .main-sidebar {
   height: 100%;
   min-height: 100vh;
   min-width: 230px;
   position: sticky;
   top: 0;
+  background: linear-gradient(180deg, #1e3a5f 0%, #0d47a1 50%, #1565c0 100%) !important;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Professional Brand Design */
+/* Professional Brand Design - Blue Gradient */
 .brand-link {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  border-bottom: 3px solid #004085;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #42a5f5 100%) !important;
+  border-bottom: 4px solid #42a5f5;
   padding: 0;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
 }
 
 .brand-text-center {
@@ -68,19 +71,21 @@ body {
   letter-spacing: 1px;
 }
 
-/* Enhanced sidebar navigation */
+/* Enhanced sidebar navigation - Professional Blue */
 .nav-sidebar .nav-link {
-  color: #c2c7d0;
-  padding: 0.75rem 1rem;
-  border-radius: 0;
-  transition: all 0.3s ease;
-  font-size: 0.875rem;
+  color: #e0e0e0;
+  padding: 12px 18px;
+  border-radius: 8px;
+  margin: 4px 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.9rem;
   font-weight: 500;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
   white-space: nowrap !important;
   text-decoration: none !important;
+  border-left: 3px solid transparent;
 }
 
 .nav-sidebar .nav-link p {
@@ -92,15 +97,18 @@ body {
 }
 
 .nav-sidebar .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg, rgba(30, 136, 229, 0.3) 0%, rgba(25, 118, 210, 0.2) 100%);
   color: #ffffff;
-  transform: translateX(5px);
+  transform: translateX(8px);
+  border-left: 3px solid #64b5f6;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.3);
 }
 
 .nav-sidebar .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(90deg, rgba(30, 136, 229, 0.4) 0%, rgba(25, 118, 210, 0.3) 100%) !important;
   color: #ffffff;
-  border-left: 4px solid #ffffff;
+  border-left: 4px solid #64b5f6;
+  box-shadow: 0 4px 15px rgba(100, 181, 246, 0.2);
 }
 
 .nav-sidebar .nav-icon {
@@ -128,21 +136,83 @@ body {
 }
 
 
-/* Dashboard cards - Dark Gradient Info Boxes */
+/* Dashboard cards - Professional Blue Info Boxes */
+.info-box {
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.info-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(25, 118, 210, 0.2) !important;
+}
+
 .info-box.bg-info,
 .info-box.bg-success,
 .info-box.bg-primary,
 .info-box.bg-warning,
 .info-box.bg-danger {
-  box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.1) !important;
-  border-radius: .375rem !important;
-  margin-bottom: 1rem !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 12px !important;
+  margin-bottom: 1.5rem !important;
   display: flex !important;
   margin-top: 1rem !important;
   position: relative !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
   color: white !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+/* Professional blue gradient backgrounds for info boxes */
+.info-box.bg-info {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+}
+
+.info-box.bg-success {
+  background: linear-gradient(135deg, #0288d1 0%, #03a9f4 100%) !important;
+}
+
+.info-box.bg-primary {
+  background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%) !important;
+}
+
+.info-box.bg-warning {
+  background: linear-gradient(135deg, #0277bd 0%, #29b6f6 100%) !important;
+}
+
+.info-box.bg-danger {
+  background: linear-gradient(135deg, #01579b 0%, #0288d1 100%) !important;
+}
+
+.info-box .info-box-icon {
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+}
+
+.info-box .info-box-icon.bg-info {
+  background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%) !important;
+}
+
+.info-box .info-box-icon.bg-success {
+  background: linear-gradient(135deg, #0277bd 0%, #03a9f4 100%) !important;
+}
+
+.info-box .info-box-icon.bg-primary {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%) !important;
+}
+
+.info-box .info-box-icon.bg-warning {
+  background: linear-gradient(135deg, #01579b 0%, #0277bd 100%) !important;
+}
+
+.info-box .info-box-icon.bg-danger {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%) !important;
 }
 
 .info-box.bg-info:hover,
@@ -253,32 +323,227 @@ body {
   color: #333 !important;
 }
 
-/* Table styles */
+/* Table styles - Enhanced for clarity with Blue accents */
 .table-responsive {
-  border-radius: .25rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.table th {
+.table {
+  margin-bottom: 0;
+  background: #ffffff;
+}
+
+.table thead th {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  color: #ffffff !important;
   border-top: none;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: .75rem !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.5px;
+  padding: 14px 12px !important;
+  white-space: nowrap;
+}
+
+.table thead th:first-child {
+  border-top-left-radius: 0;
+}
+
+.table thead th:last-child {
+  border-top-right-radius: 0;
+}
+
+.table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(25, 118, 210, 0.05) 0%, rgba(21, 101, 192, 0.05) 100%) !important;
+  transform: scale(1.01);
 }
 
 .table td {
-  font-size: .8rem !important;
+  font-size: 0.8rem !important;
+  padding: 12px 10px !important;
+  vertical-align: middle;
+  color: #2d3748;
 }
 
-/* Button styles */
-.btn-admin {
-  border-radius: .25rem;
-  font-weight: 500;
+/* ============================================
+   ACTION BUTTONS STYLING - Professional Blue
+   ============================================ */
+
+/* Container for action buttons with proper gap */
+.action-buttons {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-/* Form styles */
+/* Better spacing for action buttons in table cells */
+.table td .btn {
+  margin-right: 6px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: none;
+}
+
+.table td .btn:last-child {
+  margin-right: 0;
+}
+
+/* Edit Button - Professional Blue */
+.table td .btn-info,
+.table td .btn-outline-info {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.table td .btn-info:hover,
+.table td .btn-outline-info:hover {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+}
+
+/* Delete Button - Professional Red (kept for danger actions) */
+.table td .btn-danger {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.table td .btn-danger:hover {
+  background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+}
+
+/* Warning/Deactivate Button - Professional Amber */
+.table td .btn-warning {
+  background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+  color: #1a202c !important;
+  border: none !important;
+}
+
+.table td .btn-warning:hover {
+  background: linear-gradient(135deg, #ffb74d 0%, #f57c00 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.4);
+}
+
+/* Success/Activate Button - Professional Green */
+.table td .btn-success {
+  background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.table td .btn-success:hover {
+  background: linear-gradient(135deg, #66bb6a 0%, #388e3c 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+}
+
+/* Primary Button - Professional Blue */
+.table td .btn-primary,
+.btn-primary {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4);
+}
+
+/* Action button group with clear gaps */
+.action-btn-group {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn-group .btn {
+  margin: 0 !important;
+  padding: 6px 14px;
+}
+
+/* Form styles - Enhanced with Blue focus */
 .form-control:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+  border-color: #1976d2;
+  box-shadow: 0 0 0 0.3rem rgba(25, 118, 210, 0.25);
+}
+
+.form-control {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  padding: 10px 14px;
+  transition: all 0.3s ease;
+}
+
+.form-control:hover {
+  border-color: #cbd5e0;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* Modal enhancements - Blue Theme */
+.modal-header {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  color: white;
+  border-radius: 0;
+  border: none;
+  padding: 20px 25px;
+}
+
+.modal-header .close {
+  color: white;
+  opacity: 0.8;
+  text-shadow: none;
+}
+
+.modal-header .close:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.modal-footer {
+  padding: 15px 25px;
+  border-top: 2px solid #edf2f7;
+}
+
+.modal-content {
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+/* Form label styling */
+label {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
 }
 
 /* Loading spinner */
@@ -300,7 +565,8 @@ body {
 /* Fix for sidebar layout */
 .sidebar {
   padding: 0;
-  background-color: #343a40;
+  background: linear-gradient(180deg, #1e3a5f 0%, #0d47a1 60%, #1565c0 100%) !important;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar .nav-sidebar {
@@ -334,51 +600,137 @@ body {
   left: 100%;
 }
 
-/* Professional nav headers */
+/* Professional nav headers - Blue Accent */
 .nav-header {
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem !important;
-  font-weight: 600;
-  color: #adb5bd;
+  padding: 1rem 1.25rem;
+  font-size: 0.7rem !important;
+  font-weight: 700;
+  color: #64b5f6 !important;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  margin-bottom: 0.5rem;
-  background-color: rgba(255,255,255,0.05);
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid rgba(100, 181, 246, 0.2);
+  margin: 1rem 10px 0.5rem 10px;
+  background: linear-gradient(90deg, rgba(30, 136, 229, 0.1) 0%, rgba(25, 118, 210, 0.1) 100%);
+  border-radius: 6px;
+  padding-left: 15px;
 }
 
-/* Ensure proper spacing for content */
+/* ============================================
+   HEADER STYLING - Professional Blue
+   ============================================ */
+
+.main-header {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  border-bottom: none !important;
+  box-shadow: 0 2px 10px rgba(25, 118, 210, 0.2) !important;
+  padding: 0 20px;
+}
+
+.main-header .nav-link {
+  color: #ffffff !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.main-header .nav-link:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 6px;
+}
+
+.main-header .navbar-badge {
+  background: #ffb74d !important;
+  color: #1a202c !important;
+  font-weight: 600;
+}
+
+/* Content area improvements */
 .content {
-  padding: 15px;
+  padding: 25px;
+  background: #f8fafc;
 }
 
 .content-header {
-  padding-bottom: 15px;
+  padding-bottom: 20px;
 }
 
 .content-header h1 {
-  font-size: 1.25rem !important;
+  font-size: 1.5rem !important;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0;
+}
+
+/* ============================================
+   BADGE STYLING - Vibrant Colors
+   ============================================ */
+
+.badge {
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-success {
+  background: linear-gradient(135deg, #0288d1 0%, #03a9f4 100%) !important;
+  color: #ffffff !important;
+}
+
+.badge-danger {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%) !important;
+  color: #ffffff !important;
+}
+
+.badge-warning {
+  background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+  color: #1a202c !important;
+}
+
+.badge-info {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+  color: #ffffff !important;
+}
+
+.badge-secondary {
+  background: linear-gradient(135deg, #78909c 0%, #546e7a 100%) !important;
+  color: #ffffff !important;
 }
 
 .card-title {
   font-size: 0.9rem !important;
 }
 
-/* Card styles */
+/* Card styles - Enhanced Professional Look with Blue */
 .card {
-  box-shadow: 0 2px 4px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.1);
-  border-radius: .375rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 12px !important;
+  border: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,.15), 0 8px 16px rgba(0,0,0,.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(25, 118, 210, 0.15), 0 16px 48px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
-  background-color: #fff;
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%) !important;
+  border-bottom: 2px solid #edf2f7 !important;
+  padding: 16px 20px !important;
+}
+
+.card-header .card-title {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: #1a202c !important;
+  margin: 0;
+}
+
+.card-body {
+  padding: 20px !important;
 }
 
 /* Fix for main content area */

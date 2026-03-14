@@ -300,15 +300,22 @@ const Products = () => {
                     </td>
 
                     <td>
-                      <button
-                        className="btn btn-sm btn-outline-info mr-2"
-                        onClick={() => handleEdit(product)}
-                      >
-                        <i className="fas fa-edit"></i> Edit
-                      </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(product.id)}>
-                        <i className="fas fa-trash"></i>
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          className="btn btn-sm btn-info"
+                          onClick={() => handleEdit(product)}
+                          title="Edit"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-danger" 
+                          onClick={() => handleDelete(product.id)}
+                          title="Delete"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

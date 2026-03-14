@@ -207,18 +207,22 @@ const PackTypes = () => {
                             {new Date(packType.createdAt).toLocaleDateString()}
                           </td>
                           <td>
-                            <button
-                              className="btn btn-sm btn-info mr-2"
-                              onClick={() => handleEdit(packType)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(packType.id)}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleEdit(packType)}
+                                title="Edit"
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDelete(packType.id)}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

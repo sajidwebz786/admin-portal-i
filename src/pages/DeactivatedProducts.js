@@ -214,20 +214,22 @@ const DeactivatedProducts = () => {
                           {product.deactivatedAt ? new Date(product.deactivatedAt).toLocaleDateString() : 'N/A'}
                         </td>
                         <td>
-                          <button
-                            className="btn btn-success btn-sm mr-1"
-                            onClick={() => handleReactivate(product.id)}
-                            title="Reactivate"
-                          >
-                            <i className="fas fa-check"></i> Reactivate
-                          </button>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleDelete(product.id)}
-                            title="Delete Permanently"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
+                          <div className="action-buttons">
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleReactivate(product.id)}
+                              title="Reactivate"
+                            >
+                              <i className="fas fa-check"></i>
+                            </button>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => handleDelete(product.id)}
+                              title="Delete Permanently"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

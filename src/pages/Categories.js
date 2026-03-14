@@ -314,18 +314,22 @@ const Categories = () => {
                             {new Date(category.createdAt).toLocaleDateString()}
                           </td>
                           <td>
-                            <button
-                              className="btn btn-sm btn-outline-info mr-2"
-                              onClick={() => handleEdit(category)}
-                            >
-                              <i className="fas fa-edit"></i> Edit
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(category.id)}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleEdit(category)}
+                                title="Edit"
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDelete(category.id)}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

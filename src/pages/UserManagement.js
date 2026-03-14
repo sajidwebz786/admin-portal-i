@@ -341,29 +341,29 @@ const UserManagement = () => {
                         </td>
                         <td>
                           {isAdmin && (
-                            <>
+                            <div className="action-buttons">
                               <button
-                                className="btn btn-info btn-sm mr-1"
+                                className="btn btn-sm btn-info"
                                 onClick={() => handleEdit(user)}
                                 title="Edit"
                               >
                                 <i className="fas fa-edit"></i>
                               </button>
                               <button
-                                className={`btn btn-sm mr-1 ${user.isActive === false ? 'btn-success' : 'btn-warning'}`}
+                                className={`btn btn-sm ${user.isActive === false ? 'btn-success' : 'btn-warning'}`}
                                 onClick={() => handleToggleStatus(user)}
                                 title={user.isActive === false ? 'Activate' : 'Deactivate'}
                               >
                                 <i className={`fas ${user.isActive === false ? 'fa-check' : 'fa-ban'}`}></i>
                               </button>
                               <button
-                                className="btn btn-danger btn-sm"
+                                className="btn btn-sm btn-danger"
                                 onClick={() => handleDelete(user.id)}
                                 title="Delete"
                               >
                                 <i className="fas fa-trash"></i>
                               </button>
-                            </>
+                            </div>
                           )}
                           {!isAdmin && (
                             <span className="text-muted">View only</span>

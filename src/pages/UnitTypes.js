@@ -197,18 +197,22 @@ const UnitTypes = () => {
                             {new Date(unitType.createdAt).toLocaleDateString()}
                           </td>
                           <td>
-                            <button
-                              className="btn btn-sm btn-info mr-2"
-                              onClick={() => handleEdit(unitType)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(unitType.id)}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleEdit(unitType)}
+                                title="Edit"
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDelete(unitType.id)}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

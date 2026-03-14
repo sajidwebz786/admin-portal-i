@@ -629,32 +629,21 @@ const Packs = () => {
                             </span>
                           </td>
                           <td>
-                            <div className="dropdown">
+                            <div className="action-buttons">
                               <button
-                                className="btn btn-sm btn-secondary dropdown-toggle"
-                                type="button"
-                                id={`dropdownMenuButton${pack.id}`}
-                                data-toggle="dropdown"
-                                aria-haspopup="true"
-                                aria-expanded="false"
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleEdit(pack)}
+                                title="Edit"
                               >
-                                <i className="fas fa-ellipsis-v"></i>
+                                <i className="fas fa-edit"></i>
                               </button>
-                              <div className="dropdown-menu" aria-labelledby={`dropdownMenuButton${pack.id}`}>
-                                <button
-                                  className="dropdown-item"
-                                  onClick={() => handleEdit(pack)}
-                                >
-                                  <i className="fas fa-edit mr-2"></i>Edit
-                                </button>
-                                <div className="dropdown-divider"></div>
-                                <button
-                                  className="dropdown-item text-danger"
-                                  onClick={() => handleDelete(pack.id)}
-                                >
-                                  <i className="fas fa-trash mr-2"></i>Delete
-                                </button>
-                              </div>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleDelete(pack.id)}
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -907,8 +896,10 @@ const Packs = () => {
                                                   <div className="col-2 d-flex justify-content-end">
                                                     <button
                                                       type="button"
-                                                      className="btn btn-sm btn-outline-danger"
+                                                      className="btn btn-sm btn-danger"
                                                       onClick={() => removeProductFromPack(product.id)}
+                                                      title="Remove"
+                                                      style={{ padding: '4px 10px', fontSize: '16px', lineHeight: 1 }}
                                                     >
                                                       ×
                                                     </button>
