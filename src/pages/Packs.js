@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { packService, categoryService, productService, packProductService } from '../services/api';
+import { packService, categoryService, productService, packProductService, unitTypeService } from '../services/api';
 import { authService } from '../services/api';
 
 const Packs = () => {
@@ -10,6 +10,7 @@ const Packs = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [unitTypes, setUnitTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -91,10 +92,11 @@ const Packs = () => {
       setLoading(true);
       setError('');
 
-      const [packsRes, categoriesRes, productsRes] = await Promise.all([
+      const [packsRes, categoriesRes, productsRes, unitTypesRes] = await Promise.all([
         packService.getAll(),
         categoryService.getAll(),
         productService.getAll(),
+        unitTypeService.getAll(),
       ]);
 
       console.log('Packs data received:', {
@@ -124,6 +126,7 @@ const Packs = () => {
       });
 
       setProducts(sortedProducts);
+      setUnitTypes(unitTypesRes.data || []);
     } catch (error) {
       console.error('Packs error:', error);
       setError(`Failed to load data: ${error.message}`);
@@ -226,7 +229,8 @@ const Packs = () => {
       const packProducts = packProductsResponse.data.map(pp => ({
         productId: pp.productId,
         quantity: pp.quantity,
-        unitPrice: pp.unitPrice
+        unitPrice: pp.unitPrice,
+        unitTypeId: pp.unitTypeId || null
       }));
       setSelectedProducts(packProducts);
 
@@ -293,7 +297,8 @@ const Packs = () => {
         return [...prev, {
           productId: product.id,
           quantity: 1,
-          unitPrice: product.price
+          unitPrice: product.price,
+          unitTypeId: product.unitTypeId || null
         }];
       }
     });
@@ -321,6 +326,59 @@ const Packs = () => {
           ? { ...p, unitPrice: parsedPrice }
           : p
       )
+    );
+  };
+
+  // Helper function to calculate unit type conversion ratio
+  const getUnitConversionRatio = (fromUnitTypeId, toUnitTypeId, products, unitTypes) => {
+    if (!fromUnitTypeId || !toUnitTypeId || fromUnitTypeId === toUnitTypeId) return 1;
+    
+    const fromUnit = unitTypes.find(u => u.id === fromUnitTypeId);
+    const toUnit = unitTypes.find(u => u.id === toUnitTypeId);
+    
+    if (!fromUnit || !toUnit) return 1;
+    
+    // Common weight conversions
+    const fromAbbr = fromUnit.abbreviation?.toLowerCase() || '';
+    const toAbbr = toUnit.abbreviation?.toLowerCase() || '';
+    
+    // kg to g: divide by 1000
+    if (fromAbbr === 'kg' && toAbbr === 'g') return 0.001;
+    // g to kg: multiply by 1000
+    if (fromAbbr === 'g' && toAbbr === 'kg') return 1000;
+    // kg to 500g: multiply by 2 (1kg = 2 x 500g)
+    if (fromAbbr === 'kg' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 2;
+    // 500g to kg: divide by 2
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'kg') return 0.5;
+    // g to 500g
+    if (fromAbbr === 'g' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 500;
+    // 500g to g
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'g') return 0.002;
+    
+    // Default: no conversion
+    return 1;
+  };
+
+  const handleProductUnitTypeChange = (productId, newUnitTypeId) => {
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        if (p.productId !== productId) return p;
+        
+        // Get the product to find its original unit type and price
+        const product = products.find(prod => prod.id === productId);
+        if (!product) return { ...p, unitTypeId: parseInt(newUnitTypeId) || null };
+        
+        // Calculate new price based on unit type conversion
+        const oldUnitTypeId = p.unitTypeId || product.unitTypeId;
+        const ratio = getUnitConversionRatio(oldUnitTypeId, parseInt(newUnitTypeId), products, unitTypes);
+        const newPrice = (p.unitPrice || product.price) * ratio;
+        
+        return {
+          ...p,
+          unitTypeId: parseInt(newUnitTypeId) || null,
+          unitPrice: parseFloat(newPrice.toFixed(2))
+        };
+      })
     );
   };
 
@@ -747,7 +805,7 @@ const Packs = () => {
                                             {isSelected && (
                                               <div className="mt-3">
                                                 <div className="row">
-                                                  <div className="col-5">
+                                                  <div className="col-4">
                                                     <input
                                                       type="number"
                                                       className="form-control form-control-sm"
@@ -757,12 +815,26 @@ const Packs = () => {
                                                       min="1"
                                                     />
                                                   </div>
-                                                  <div className="col-5">
+                                                  <div className="col-3">
+                                                    <select
+                                                      className="form-control form-control-sm"
+                                                      value={selectedProduct.unitTypeId || ''}
+                                                      onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
+                                                    >
+                                                      <option value="">Unit</option>
+                                                      {unitTypes.map((u) => (
+                                                        <option key={u.id} value={u.id}>
+                                                          {u.abbreviation}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
+                                                  <div className="col-3">
                                                     <input
                                                       type="number"
                                                       step="0.01"
                                                       className="form-control form-control-sm"
-                                                      placeholder="Unit Price"
+                                                      placeholder="Price"
                                                       value={selectedProduct.unitPrice}
                                                       onChange={(e) => handleProductPriceChange(product.id, e.target.value)}
                                                     />
