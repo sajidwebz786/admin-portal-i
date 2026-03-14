@@ -331,6 +331,7 @@ const Packs = () => {
 
   // Helper function to calculate unit type conversion ratio
   // Returns the multiplier to convert price from old unit to new unit
+  // Example: 180/kg to 500g = 180 * 0.5 = 90 (divide by 2 because 500g is half of 1kg)
   const getUnitConversionRatio = (fromUnitTypeId, toUnitTypeId, products, unitTypes) => {
     if (!fromUnitTypeId || !toUnitTypeId || fromUnitTypeId === toUnitTypeId) return 1;
     
@@ -339,38 +340,76 @@ const Packs = () => {
     
     if (!fromUnit || !toUnit) return 1;
     
-    // Common weight conversions
-    const fromAbbr = fromUnit.abbreviation?.toLowerCase() || '';
-    const toAbbr = toUnit.abbreviation?.toLowerCase() || '';
+    // Get abbreviations in lowercase for comparison
+    const fromAbbr = (fromUnit.abbreviation || '').toLowerCase().trim();
+    const toAbbr = (toUnit.abbreviation || '').toLowerCase().trim();
     
-    // When converting FROM a larger unit TO a smaller unit, we need to divide
-    // Example: 180/kg to 500g means 180/2 = 90 (divide by 2 because 500g is half of 1kg)
-    // kg to g: divide by 1000 (1kg = 1000g, so price per gram is price per kg / 1000)
+    // ==========================================
+    // KILOGRAM BASED CONVERSIONS
+    // ==========================================
+    // kg to g
     if (fromAbbr === 'kg' && toAbbr === 'g') return 0.001;
-    // kg to 500g: divide by 2 (1kg = 2 x 500g, so price per 500g is price per kg / 2)
-    if (fromAbbr === 'kg' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 0.5;
-    // kg to 250g: divide by 4
+    // kg to 500g / 1/2kg / 0.5kg
+    if (fromAbbr === 'kg' && ['500g', '1/2kg', '0.5kg', 'half kg'].includes(toAbbr)) return 0.5;
+    // kg to 250g
     if (fromAbbr === 'kg' && toAbbr === '250g') return 0.25;
-    // kg to 100g: divide by 10
+    // kg to 100g
     if (fromAbbr === 'kg' && toAbbr === '100g') return 0.1;
     
-    // g to kg: multiply by 1000 (1g = 0.001kg, so price per kg = price per g * 1000)
+    // g to kg
     if (fromAbbr === 'g' && toAbbr === 'kg') return 1000;
-    // g to 500g: multiply by 500 (1g = 0.5 500g, so price per 500g = price per g * 500)
-    if (fromAbbr === 'g' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 500;
-    // g to 250g: multiply by 250
+    // g to 500g
+    if (fromAbbr === 'g' && ['500g', '1/2kg', '0.5kg', 'half kg'].includes(toAbbr)) return 500;
+    // g to 250g
     if (fromAbbr === 'g' && toAbbr === '250g') return 250;
-    // g to 100g: multiply by 100
+    // g to 100g
     if (fromAbbr === 'g' && toAbbr === '100g') return 100;
     
-    // 500g to kg: multiply by 2 (1 x 500g = 0.5kg, so price per kg = price per 500g * 2)
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'kg') return 2;
-    // 500g to g: multiply by 500 (1 x 500g = 500g, so price per g = price per 500g * 500)
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'g') return 500;
-    // 500g to 250g: multiply by 2 (1 x 500g = 2 x 250g)
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === '250g') return 2;
-    // 500g to 100g: multiply by 5 (1 x 500g = 5 x 100g)
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === '100g') return 5;
+    // 500g to kg
+    if (['500g', '1/2kg', '0.5kg', 'half kg'].includes(fromAbbr) && toAbbr === 'kg') return 2;
+    // 500g to g
+    if (['500g', '1/2kg', '0.5kg', 'half kg'].includes(fromAbbr) && toAbbr === 'g') return 500;
+    // 500g to 250g
+    if (['500g', '1/2kg', '0.5kg', 'half kg'].includes(fromAbbr) && toAbbr === '250g') return 2;
+    // 500g to 100g
+    if (['500g', '1/2kg', '0.5kg', 'half kg'].includes(fromAbbr) && toAbbr === '100g') return 5;
+    
+    // ==========================================
+    // DOZEN BASED CONVERSIONS (12 items = 1 dozen)
+    // ==========================================
+    // Dozen to Half Dozen (6 pcs)
+    if ((fromAbbr === 'dozen' || fromAbbr === 'dz' || fromAbbr === '12pcs') && 
+        (toAbbr === 'half dozen' || toAbbr === 'hdzn' || toAbbr === '6pcs' || toAbbr === '1/2dz')) return 0.5;
+    // Dozen to pieces
+    if ((fromAbbr === 'dozen' || fromAbbr === 'dz' || fromAbbr === '12pcs') && toAbbr === 'pc') return 12;
+    if ((fromAbbr === 'dozen' || fromAbbr === 'dz' || fromAbbr === '12pcs') && toAbbr === 'pcs') return 12;
+    
+    // Half Dozen (6 pcs) to Dozen
+    if ((fromAbbr === 'half dozen' || fromAbbr === 'hdzn' || fromAbbr === '6pcs' || fromAbbr === '1/2dz') && 
+        (toAbbr === 'dozen' || toAbbr === 'dz' || toAbbr === '12pcs')) return 2;
+    // Half Dozen to pieces
+    if ((fromAbbr === 'half dozen' || fromAbbr === 'hdzn' || fromAbbr === '6pcs' || fromAbbr === '1/2dz') && toAbbr === 'pc') return 6;
+    if ((fromAbbr === 'half dozen' || fromAbbr === 'hdzn' || fromAbbr === '6pcs' || fromAbbr === '1/2dz') && toAbbr === 'pcs') return 6;
+    
+    // Pieces to Dozen
+    if ((fromAbbr === 'pc' || fromAbbr === 'pcs') && (toAbbr === 'dozen' || toAbbr === 'dz' || toAbbr === '12pcs')) return 1/12;
+    // Pieces to Half Dozen
+    if ((fromAbbr === 'pc' || fromAbbr === 'pcs') && (toAbbr === 'half dozen' || toAbbr === 'hdzn' || toAbbr === '6pcs' || toAbbr === '1/2dz')) return 1/6;
+    
+    // ==========================================
+    // LITER BASED CONVERSIONS
+    // ==========================================
+    // L to ml
+    if (fromAbbr === 'l' && toAbbr === 'ml') return 0.001;
+    // L to 500ml
+    if (fromAbbr === 'l' && ['500ml', '1/2l', '0.5l'].includes(toAbbr)) return 0.5;
+    // L to 250ml
+    if (fromAbbr === 'l' && toAbbr === '250ml') return 0.25;
+    
+    // ml to L
+    if (fromAbbr === 'ml' && toAbbr === 'l') return 1000;
+    // 500ml to L
+    if (['500ml', '1/2l', '0.5l'].includes(fromAbbr) && toAbbr === 'l') return 2;
     
     // Default: no conversion
     return 1;
