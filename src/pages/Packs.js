@@ -330,6 +330,7 @@ const Packs = () => {
   };
 
   // Helper function to calculate unit type conversion ratio
+  // Returns the multiplier to convert price from old unit to new unit
   const getUnitConversionRatio = (fromUnitTypeId, toUnitTypeId, products, unitTypes) => {
     if (!fromUnitTypeId || !toUnitTypeId || fromUnitTypeId === toUnitTypeId) return 1;
     
@@ -342,18 +343,34 @@ const Packs = () => {
     const fromAbbr = fromUnit.abbreviation?.toLowerCase() || '';
     const toAbbr = toUnit.abbreviation?.toLowerCase() || '';
     
-    // kg to g: divide by 1000
+    // When converting FROM a larger unit TO a smaller unit, we need to divide
+    // Example: 180/kg to 500g means 180/2 = 90 (divide by 2 because 500g is half of 1kg)
+    // kg to g: divide by 1000 (1kg = 1000g, so price per gram is price per kg / 1000)
     if (fromAbbr === 'kg' && toAbbr === 'g') return 0.001;
-    // g to kg: multiply by 1000
+    // kg to 500g: divide by 2 (1kg = 2 x 500g, so price per 500g is price per kg / 2)
+    if (fromAbbr === 'kg' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 0.5;
+    // kg to 250g: divide by 4
+    if (fromAbbr === 'kg' && toAbbr === '250g') return 0.25;
+    // kg to 100g: divide by 10
+    if (fromAbbr === 'kg' && toAbbr === '100g') return 0.1;
+    
+    // g to kg: multiply by 1000 (1g = 0.001kg, so price per kg = price per g * 1000)
     if (fromAbbr === 'g' && toAbbr === 'kg') return 1000;
-    // kg to 500g: multiply by 2 (1kg = 2 x 500g)
-    if (fromAbbr === 'kg' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 2;
-    // 500g to kg: divide by 2
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'kg') return 0.5;
-    // g to 500g
+    // g to 500g: multiply by 500 (1g = 0.5 500g, so price per 500g = price per g * 500)
     if (fromAbbr === 'g' && (toAbbr === '500g' || toAbbr === '1/2kg' || toAbbr === '0.5kg')) return 500;
-    // 500g to g
-    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'g') return 0.002;
+    // g to 250g: multiply by 250
+    if (fromAbbr === 'g' && toAbbr === '250g') return 250;
+    // g to 100g: multiply by 100
+    if (fromAbbr === 'g' && toAbbr === '100g') return 100;
+    
+    // 500g to kg: multiply by 2 (1 x 500g = 0.5kg, so price per kg = price per 500g * 2)
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'kg') return 2;
+    // 500g to g: multiply by 500 (1 x 500g = 500g, so price per g = price per 500g * 500)
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === 'g') return 500;
+    // 500g to 250g: multiply by 2 (1 x 500g = 2 x 250g)
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === '250g') return 2;
+    // 500g to 100g: multiply by 5 (1 x 500g = 5 x 100g)
+    if ((fromAbbr === '500g' || fromAbbr === '1/2kg' || fromAbbr === '0.5kg') && toAbbr === '100g') return 5;
     
     // Default: no conversion
     return 1;
@@ -881,7 +898,7 @@ const Packs = () => {
                                 <div key={sp.productId} className="d-flex justify-content-between align-items-center mb-1">
                                   <span>{product?.name}</span>
                                   <small className="text-muted">
-                                    {sp.quantity} × ₹{sp.unitPrice} = ₹{(sp.quantity * sp.unitPrice).toFixed(2)}
+                                    {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{(sp.quantity * sp.unitPrice).toFixed(2)}
                                   </small>
                                 </div>
                               );
