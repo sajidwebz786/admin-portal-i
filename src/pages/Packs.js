@@ -855,9 +855,9 @@ const Packs = () => {
                                                       value={selectedProduct.unitPrice}
                                                       onChange={(e) => handleProductPriceChange(product.id, e.target.value)}
                                                     />
-                                                    <small className="text-muted">
+                                                    <div className="text-success font-weight-bold" style={{ fontSize: '11px', marginTop: '2px' }}>
                                                       Total: ₹{(selectedProduct.quantity * selectedProduct.unitPrice).toFixed(2)}
-                                                    </small>
+                                                    </div>
                                                   </div>
                                                   <div className="col-2 d-flex justify-content-end">
                                                     <button
