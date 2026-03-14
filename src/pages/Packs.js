@@ -851,12 +851,17 @@ const Packs = () => {
                                                       type="number"
                                                       step="0.01"
                                                       className="form-control form-control-sm"
-                                                      placeholder="Price"
-                                                      value={selectedProduct.unitPrice}
-                                                      onChange={(e) => handleProductPriceChange(product.id, e.target.value)}
+                                                      placeholder="Total Price"
+                                                      value={(selectedProduct.quantity * selectedProduct.unitPrice).toFixed(2)}
+                                                      onChange={(e) => {
+                                                        const newTotal = parseFloat(e.target.value);
+                                                        if (newTotal > 0 && selectedProduct.quantity > 0) {
+                                                          handleProductPriceChange(product.id, (newTotal / selectedProduct.quantity).toString());
+                                                        }
+                                                      }}
                                                     />
-                                                    <div className="text-success font-weight-bold" style={{ fontSize: '11px', marginTop: '2px' }}>
-                                                      Total: ₹{(selectedProduct.quantity * selectedProduct.unitPrice).toFixed(2)}
+                                                    <div className="text-muted" style={{ fontSize: '10px', marginTop: '2px' }}>
+                                                      (₹{selectedProduct.unitPrice} per {unitTypes.find(u => u.id === selectedProduct.unitTypeId)?.abbreviation || 'unit'})
                                                     </div>
                                                   </div>
                                                   <div className="col-2 d-flex justify-content-end">
