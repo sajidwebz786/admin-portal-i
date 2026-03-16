@@ -35,6 +35,7 @@ const Packs = () => {
     packTypeId: '',
     basePrice: '0',
     finalPrice: '',
+    sellingPrice: '',
     validFrom: '',
     validUntil: '',
   });
@@ -253,6 +254,7 @@ const Packs = () => {
         packTypeId: pack.packTypeId?.toString() || '',
         basePrice: calculatedBasePrice.toFixed(2),
         finalPrice: calculatedBasePrice.toFixed(2),
+        sellingPrice: pack.sellingPrice?.toString() || '',
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
         validUntil: pack.validUntil ? pack.validUntil.substring(0, 10) : '',
       });
@@ -267,6 +269,7 @@ const Packs = () => {
         packTypeId: pack.packTypeId?.toString() || '',
         basePrice: pack.basePrice?.toString() || '0',
         finalPrice: pack.finalPrice?.toString() || pack.basePrice?.toString() || '0',
+        sellingPrice: pack.sellingPrice?.toString() || '',
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
         validUntil: pack.validUntil ? pack.validUntil.substring(0, 10) : '',
       });
@@ -296,6 +299,7 @@ const Packs = () => {
       packTypeId: '',
       basePrice: '0',
       finalPrice: '0',
+      sellingPrice: '',
       validFrom: '',
       validUntil: '',
     });
@@ -631,7 +635,7 @@ const Packs = () => {
                               )}
                             </small>
                           </td>
-                          <td>₹{pack.finalPrice}</td>
+                          <td>₹{pack.sellingPrice || pack.finalPrice}</td>
                           <td>
                             <span
                               className={`badge ${
@@ -806,7 +810,7 @@ const Packs = () => {
                     </div>
 
                     <div className="row">
-                      <div className="col-md-12">
+                      <div className="col-md-6">
                         <div className="form-group">
                           <label>Pack Price *</label>
                           <input
@@ -820,6 +824,25 @@ const Packs = () => {
                           />
                           <small className="form-text text-muted">
                             Auto-calculated from products (base price)
+                          </small>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>Selling Price (Customer Price)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="form-control"
+                            value={formData.sellingPrice}
+                            onChange={(e) =>
+                              setFormData({ ...formData, sellingPrice: e.target.value })
+                            }
+                            placeholder="Enter selling price"
+                            style={{ fontSize: '18px', fontWeight: 'bold', borderColor: formData.sellingPrice && parseFloat(formData.sellingPrice) < parseFloat(formData.finalPrice) ? '#ffc107' : '' }}
+                          />
+                          <small className="form-text text-muted">
+                            Price shown to customers (leave empty to use base price)
                           </small>
                         </div>
                       </div>
