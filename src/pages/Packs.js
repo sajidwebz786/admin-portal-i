@@ -806,7 +806,7 @@ const Packs = () => {
                     </div>
 
                     <div className="row">
-                      <div className="col-md-6">
+                      <div className="col-md-12">
                         <div className="form-group">
                           <label>Pack Price *</label>
                           <input
@@ -815,7 +815,7 @@ const Packs = () => {
                             className="form-control"
                             value={formData.finalPrice}
                             readOnly
-                            style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
+                            style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed', fontSize: '18px', fontWeight: 'bold' }}
                             title="Auto-calculated from selected products"
                           />
                           <small className="form-text text-muted">
