@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { packService, categoryService, productService, packProductService, unitTypeService } from '../services/api';
+import { packService, categoryService, productService, packProductService, unitTypeService, packTypeService } from '../services/api';
 import { authService } from '../services/api';
 
 const Packs = () => {
@@ -8,6 +8,7 @@ const Packs = () => {
   const [filteredPacks, setFilteredPacks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
+  const [packTypes, setPackTypes] = useState([]);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [unitTypes, setUnitTypes] = useState([]);
@@ -31,6 +32,7 @@ const Packs = () => {
     description: '',
     content: '',
     categoryId: '',
+    packTypeId: '',
     basePrice: '0',
     finalPrice: '',
     validFrom: '',
@@ -93,17 +95,19 @@ const Packs = () => {
       setLoading(true);
       setError('');
 
-      const [packsRes, categoriesRes, productsRes, unitTypesRes] = await Promise.all([
+      const [packsRes, categoriesRes, productsRes, unitTypesRes, packTypesRes] = await Promise.all([
         packService.getAll(),
         categoryService.getAll(),
         productService.getAll(),
         unitTypeService.getAll(),
+        packTypeService.getAll(),
       ]);
 
       console.log('Packs data received:', {
         packs: packsRes.data?.length || 0,
         categories: categoriesRes.data?.length || 0,
         products: productsRes.data?.length || 0,
+        packTypes: packTypesRes.data?.length || 0,
       });
 
       // Sort packs by categoryId, then by id
@@ -117,6 +121,7 @@ const Packs = () => {
       setPacks(sortedPacks);
       setFilteredPacks(sortedPacks);
       setCategories(categoriesRes.data || []);
+      setPackTypes(packTypesRes.data || []);
 
       // Sort products by categoryId, then by id to maintain consistent order
       const sortedProducts = (productsRes.data || []).sort((a, b) => {
@@ -147,6 +152,7 @@ const Packs = () => {
         basePrice: parseFloat(formData.basePrice),
         finalPrice: calculatedPrice,
         categoryId: parseInt(formData.categoryId),
+        packTypeId: formData.packTypeId ? parseInt(formData.packTypeId) : null,
       };
 
       let savedPack;
@@ -244,6 +250,7 @@ const Packs = () => {
         description: pack.description || '',
         content: pack.content || '',
         categoryId: pack.categoryId?.toString() || '',
+        packTypeId: pack.packTypeId?.toString() || '',
         basePrice: calculatedBasePrice.toFixed(2),
         finalPrice: calculatedBasePrice.toFixed(2),
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
@@ -257,6 +264,7 @@ const Packs = () => {
         description: pack.description || '',
         content: pack.content || '',
         categoryId: pack.categoryId?.toString() || '',
+        packTypeId: pack.packTypeId?.toString() || '',
         basePrice: pack.basePrice?.toString() || '0',
         finalPrice: pack.finalPrice?.toString() || pack.basePrice?.toString() || '0',
         validFrom: pack.validFrom ? pack.validFrom.substring(0, 10) : '',
@@ -285,6 +293,7 @@ const Packs = () => {
       description: '',
       content: '',
       categoryId: '',
+      packTypeId: '',
       basePrice: '0',
       finalPrice: '0',
       validFrom: '',
@@ -733,6 +742,31 @@ const Packs = () => {
                               </option>
                             ))}
                           </select>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="form-group">
+                          <label>Pack Type</label>
+                          <select
+                            className="form-control"
+                            value={formData.packTypeId}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                packTypeId: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Pack Type</option>
+                            {packTypes.map((packType) => (
+                              <option key={packType.id} value={packType.id}>
+                                {packType.name}
+                              </option>
+                            ))}
+                          </select>
+                          <small className="form-text text-muted">
+                            Optional: Select a pack type for this pack
+                          </small>
                         </div>
                       </div>
                     </div>
