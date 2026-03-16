@@ -953,10 +953,20 @@ const Packs = () => {
                                                   <div className="col-1 d-flex justify-content-end">
                                                     <button
                                                       type="button"
-                                                      className="btn btn-sm btn-danger"
                                                       onClick={() => removeProductFromPack(product.id)}
                                                       title="Remove"
-                                                      style={{ padding: '4px 10px', fontSize: '16px', lineHeight: 1 }}
+                                                      style={{ 
+                                                        background: 'none', 
+                                                        border: 'none', 
+                                                        cursor: 'pointer', 
+                                                        fontSize: '24px', 
+                                                        color: '#dc3545',
+                                                        padding: '0',
+                                                        lineHeight: '1',
+                                                        transition: 'transform 0.2s'
+                                                      }}
+                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.3)'}
+                                                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                                                     >
                                                       ×
                                                     </button>
