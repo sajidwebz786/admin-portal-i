@@ -11,8 +11,9 @@ const PackTypes = () => {
   const [editingPackType, setEditingPackType] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    duration: 'weekly',
+    duration: 'small',
     basePrice: '',
+    color: '#66BB6A',
   });
 
   useEffect(() => {
@@ -65,6 +66,7 @@ const PackTypes = () => {
       name: packType.name,
       duration: packType.duration,
       basePrice: packType.basePrice?.toString() || '',
+      color: packType.color || '#66BB6A',
     });
     setShowModal(true);
   };
@@ -84,8 +86,9 @@ const PackTypes = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      duration: 'weekly',
+      duration: 'small',
       basePrice: '',
+      color: '#66BB6A',
     });
   };
 
@@ -174,6 +177,7 @@ const PackTypes = () => {
                         <th>ID</th>
                         <th>Name</th>
                         <th>Duration</th>
+                        <th>Color</th>
                         <th>Base Price</th>
                         <th>Status</th>
                         <th>Created At</th>
@@ -187,11 +191,35 @@ const PackTypes = () => {
                           <td>{packType.name}</td>
                           <td>
                             <span className={`badge ${
-                              packType.duration === 'weekly' ? 'badge-primary' :
-                              packType.duration === 'bi-weekly' ? 'badge-info' : 'badge-success'
+                              packType.duration === 'small' ? 'badge-primary' :
+                              packType.duration === 'medium' ? 'badge-info' :
+                              packType.duration === 'large' ? 'badge-success' : 'badge-warning'
                             }`}>
-                              {packType.duration === 'bi-weekly' ? 'Bi-weekly' : packType.duration}
+                              {packType.duration === 'small' ? 'Small' : 
+                               packType.duration === 'medium' ? 'Medium' : 
+                               packType.duration === 'large' ? 'Large' : 'Custom'}
                             </span>
+                          </td>
+                          <td>
+                            {packType.color ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    width: '20px',
+                                    height: '20px',
+                                    backgroundColor: packType.color,
+                                    borderRadius: '3px',
+                                    border: '1px solid #ddd'
+                                  }}
+                                />
+                                <span className="text-muted" style={{ fontSize: '12px' }}>
+                                  {packType.color}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
                           </td>
                           <td>₹{packType.basePrice}</td>
                           <td>
@@ -283,9 +311,10 @@ const PackTypes = () => {
                         }
                         required
                       >
-                        <option value="weekly">Weekly</option>
-                        <option value="bi-weekly">Bi-weekly</option>
-                        <option value="monthly">Monthly</option>
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                        <option value="custom">Custom</option>
                       </select>
                     </div>
 
@@ -302,6 +331,36 @@ const PackTypes = () => {
                         placeholder="Enter base price"
                         required
                       />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Card Color</label>
+                      <div className="input-group">
+                        <div className="input-group-prepend">
+                          <span className="input-group-text">
+                            <input
+                              type="color"
+                              value={formData.color || '#66BB6A'}
+                              onChange={(e) =>
+                                setFormData({ ...formData, color: e.target.value })
+                              }
+                              style={{ width: '30px', height: '30px', padding: 0, border: 'none' }}
+                            />
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={formData.color || '#66BB6A'}
+                          onChange={(e) =>
+                            setFormData({ ...formData, color: e.target.value })
+                          }
+                          placeholder="#66BB6A"
+                        />
+                      </div>
+                      <small className="form-text text-muted">
+                        Background color for pack type card in mobile app
+                      </small>
                     </div>
                   </div>
                   <div className="modal-footer">

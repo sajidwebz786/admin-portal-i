@@ -29,6 +29,7 @@ const Packs = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    content: '',
     categoryId: '',
     basePrice: '0',
     finalPrice: '',
@@ -241,6 +242,7 @@ const Packs = () => {
       setFormData({
         name: pack.name,
         description: pack.description || '',
+        content: pack.content || '',
         categoryId: pack.categoryId?.toString() || '',
         basePrice: calculatedBasePrice.toFixed(2),
         finalPrice: calculatedBasePrice.toFixed(2),
@@ -253,6 +255,7 @@ const Packs = () => {
       setFormData({
         name: pack.name,
         description: pack.description || '',
+        content: pack.content || '',
         categoryId: pack.categoryId?.toString() || '',
         basePrice: pack.basePrice?.toString() || '0',
         finalPrice: pack.finalPrice?.toString() || pack.basePrice?.toString() || '0',
@@ -280,6 +283,7 @@ const Packs = () => {
     setFormData({
       name: '',
       description: '',
+      content: '',
       categoryId: '',
       basePrice: '0',
       finalPrice: '0',
@@ -746,6 +750,25 @@ const Packs = () => {
                           })
                         }
                       ></textarea>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Content (Long Description)</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        value={formData.content}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            content: e.target.value,
+                          })
+                        }
+                        placeholder="Enter detailed content about this pack..."
+                      ></textarea>
+                      <small className="form-text text-muted">
+                        This will be displayed as the long description for the pack
+                      </small>
                     </div>
 
                     <div className="row">
