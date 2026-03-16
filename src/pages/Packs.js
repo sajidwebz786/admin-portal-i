@@ -908,10 +908,10 @@ const Packs = () => {
                                             {isSelected && (
                                               <div className="mt-3">
                                                 <div className="row">
-                                                  <div className="col-4">
+                                                  <div className="col-3">
                                                     <input
                                                       type="number"
-                                                      className="form-control form-control-sm"
+                                                      className="form-control"
                                                       placeholder="Qty"
                                                       value={selectedProduct.quantity}
                                                       onChange={(e) => handleProductQuantityChange(product.id, e.target.value)}
@@ -920,7 +920,7 @@ const Packs = () => {
                                                   </div>
                                                   <div className="col-3">
                                                     <select
-                                                      className="form-control form-control-sm"
+                                                      className="form-control"
                                                       value={selectedProduct.unitTypeId || ''}
                                                       onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
                                                     >
@@ -932,11 +932,11 @@ const Packs = () => {
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-3">
+                                                  <div className="col-5">
                                                     <input
                                                       type="number"
                                                       step="0.01"
-                                                      className="form-control form-control-sm"
+                                                      className="form-control"
                                                       placeholder="Total Price"
                                                       value={(selectedProduct.quantity * selectedProduct.unitPrice).toFixed(2)}
                                                       onChange={(e) => {
@@ -950,7 +950,7 @@ const Packs = () => {
                                                       (₹{selectedProduct.unitPrice} per {unitTypes.find(u => u.id === selectedProduct.unitTypeId)?.abbreviation || 'unit'})
                                                     </div>
                                                   </div>
-                                                  <div className="col-2 d-flex justify-content-end">
+                                                  <div className="col-1 d-flex justify-content-end">
                                                     <button
                                                       type="button"
                                                       className="btn btn-sm btn-danger"
