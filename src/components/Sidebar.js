@@ -46,7 +46,7 @@ const Sidebar = () => {
               </li>
             )}
             
-            {allowedMenuItems.filter(item => ['/', '/categories', '/products', '/packs', '/unit-types'].includes(item.path)).map((item) => (
+            {allowedMenuItems.filter(item => ['/', '/categories', '/products', '/packs', '/pack-types', '/unit-types'].includes(item.path)).map((item) => (
               <li className="nav-item" key={item.path}>
                 <Link to={item.path} className={`nav-link ${isActive(item.path)}`}>
                   <i className={`nav-icon fas ${item.icon}`}></i>
