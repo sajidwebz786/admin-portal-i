@@ -45,8 +45,10 @@ const Orders = () => {
     setDetailsLoading(true);
     try {
       // Try to fetch full order details from API
-      const response = await orderService.getById(order.id || order._id);
-      setOrderDetails(response.data);
+      const orderId = order._id || order.id;
+      const response = await orderService.getById(orderId);
+      // Merge API response with local order data to ensure all fields are available
+      setOrderDetails({ ...order, ...response.data });
     } catch (error) {
       console.error('Error fetching order details:', error);
       // Fallback to the order data we already have
@@ -229,13 +231,13 @@ const Orders = () => {
                         <div className="col-md-6">
                           <h6 className="text-muted">Customer Information</h6>
                           <p className="mb-1">
-                            <strong>Name:</strong> {orderDetails.User?.name || orderDetails.customerName || orderDetails.userName || 'N/A'}
+                            <strong>Name:</strong> {orderDetails.User?.name || orderDetails.customerName || orderDetails.userName || orderDetails.name || 'N/A'}
                           </p>
                           <p className="mb-1">
                             <strong>Email:</strong> {orderDetails.User?.email || orderDetails.email || 'N/A'}
                           </p>
                           <p className="mb-1">
-                            <strong>Phone:</strong> {orderDetails.User?.phone || orderDetails.phone || 'N/A'}
+                            <strong>Phone:</strong> {orderDetails.User?.phone || orderDetails.phone || orderDetails.mobile || 'N/A'}
                           </p>
                           
                           <h6 className="text-muted mt-4">Shipping Address</h6>
