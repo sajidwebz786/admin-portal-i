@@ -16,6 +16,10 @@ const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentCustomers, setRecentCustomers] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -86,6 +90,29 @@ const Dashboard = () => {
     const updated = [newNotification, ...notifications];
     setNotifications(updated);
     setUnreadCount(prev => prev + 1);
+  };
+
+  const handleViewOrder = async (order) => {
+    setSelectedOrder(order);
+    setShowModal(true);
+    setDetailsLoading(true);
+    try {
+      // Try to fetch full order details from API
+      const response = await orderService.getById(order._id || order.id);
+      setOrderDetails(response.data);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      // Fallback to the order data we already have
+      setOrderDetails(order);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedOrder(null);
+    setOrderDetails(null);
   };
 
   const fetchDashboardData = async () => {
@@ -362,6 +389,7 @@ const Dashboard = () => {
                           <th>Status</th>
                           <th>Total</th>
                           <th>Delivered Date</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -441,6 +469,14 @@ const Dashboard = () => {
                               ) : (
                                 <span className="text-muted">-</span>
                               )}
+                            </td>
+                            <td>
+                              <button 
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleViewOrder(order)}
+                              >
+                                <i className="fas fa-eye"></i> View
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -571,6 +607,170 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Order Details Modal */}
+        {showModal && (
+          <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    Order Details #{orderDetails?.orderNumber || orderDetails?._id || selectedOrder?.orderNumber || selectedOrder?._id?.substring(0, 8)}
+                  </h5>
+                  <button 
+                    type="button" 
+                    className="close" 
+                    onClick={closeModal}
+                  >
+                    <span>&times;</span>
+                  </button>
+                </div>
+                <div className="modal-body">
+                  {detailsLoading ? (
+                    <div className="text-center py-4">
+                      <div className="spinner-border" role="status">
+                        <span className="sr-only">Loading...</span>
+                      </div>
+                    </div>
+                  ) : orderDetails ? (
+                    <div>
+                      <div className="row">
+                        <div className="col-md-6">
+                          <h6 className="text-muted">Customer Information</h6>
+                          <p className="mb-1">
+                            <strong>Name:</strong> {orderDetails.User?.name || orderDetails.customerName || orderDetails.userName || 'N/A'}
+                          </p>
+                          <p className="mb-1">
+                            <strong>Email:</strong> {orderDetails.User?.email || orderDetails.email || 'N/A'}
+                          </p>
+                          <p className="mb-1">
+                            <strong>Phone:</strong> {orderDetails.User?.phone || orderDetails.phone || 'N/A'}
+                          </p>
+                          
+                          <h6 className="text-muted mt-4">Shipping Address</h6>
+                          <p className="mb-0">
+                            {orderDetails.shippingAddress ? (
+                              <span>
+                                {orderDetails.shippingAddress.address}<br />
+                                {orderDetails.shippingAddress.city}<br />
+                                {orderDetails.shippingAddress.state && `${orderDetails.shippingAddress.state}, `}
+                                {orderDetails.shippingAddress.zipCode}
+                              </span>
+                            ) : orderDetails.deliveryAddress ? (
+                              typeof orderDetails.deliveryAddress === 'object' ? (
+                                <span>
+                                  {orderDetails.deliveryAddress.address}<br />
+                                  {orderDetails.deliveryAddress.city}
+                                </span>
+                              ) : orderDetails.deliveryAddress
+                            ) : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="col-md-6">
+                          <h6 className="text-muted">Order Information</h6>
+                          <p className="mb-1">
+                            <strong>Order ID:</strong> {orderDetails.orderNumber || orderDetails._id || orderDetails.id}
+                          </p>
+                          <p className="mb-1">
+                            <strong>Status:</strong>{' '}
+                            <span className={`badge ${
+                              orderDetails.status === 'pending' ? 'bg-warning' :
+                              orderDetails.status === 'processing' ? 'bg-info' :
+                              orderDetails.status === 'delivered' ? 'bg-success' :
+                              orderDetails.status === 'cancelled' ? 'bg-danger' : 'bg-secondary'
+                            }`}>
+                              {orderDetails.status || 'Pending'}
+                            </span>
+                          </p>
+                          <p className="mb-1">
+                            <strong>Order Date:</strong> {orderDetails.createdAt ? new Date(orderDetails.createdAt).toLocaleDateString('en-IN') : 'N/A'}
+                          </p>
+                          <p className="mb-1">
+                            <strong>Delivery Date:</strong> {orderDetails.deliveryDate ? new Date(orderDetails.deliveryDate).toLocaleDateString('en-IN') : 'Not specified'}
+                          </p>
+                          {orderDetails.deliveryTime && (
+                            <p className="mb-1">
+                              <strong>Time Slot:</strong> {orderDetails.deliveryTime}
+                            </p>
+                          )}
+                          <p className="mb-1">
+                            <strong>Payment Method:</strong> {orderDetails.paymentMethod || orderDetails.payment || 'N/A'}
+                          </p>
+                          <p className="mb-1">
+                            <strong>Payment Status:</strong>{' '}
+                            <span className={`badge ${orderDetails.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning'}`}>
+                              {orderDetails.paymentStatus || 'Pending'}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="row mt-4">
+                        <div className="col-12">
+                          <h6 className="text-muted">Order Items</h6>
+                          <table className="table table-sm table-bordered">
+                            <thead>
+                              <tr>
+                                <th>Item</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderDetails.Pack ? (
+                                <tr>
+                                  <td>
+                                    {orderDetails.Pack.name} ({orderDetails.Pack.PackType?.name})
+                                  </td>
+                                  <td>{orderDetails.quantity || 1}</td>
+                                  <td>₹{orderDetails.Pack.price || orderDetails.price || 0}</td>
+                                  <td>₹{orderDetails.total || orderDetails.totalAmount || orderDetails.Pack.price || 0}</td>
+                                </tr>
+                              ) : orderDetails.items && orderDetails.items.length > 0 ? (
+                                orderDetails.items.map((item, idx) => (
+                                  <tr key={idx}>
+                                    <td>{item.productName || item.name || item.product}</td>
+                                    <td>{item.quantity || 1}</td>
+                                    <td>₹{item.price || 0}</td>
+                                    <td>₹{(item.quantity || 1) * (item.price || 0)}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="4" className="text-center text-muted">
+                                    No item details available
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                            <tfoot>
+                              <tr className="table-active">
+                                <th colSpan="3" className="text-right">Grand Total:</th>
+                                <th>₹{orderDetails.total || orderDetails.totalAmount || orderDetails.amount || 0}</th>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted">No order details available</p>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={closeModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
