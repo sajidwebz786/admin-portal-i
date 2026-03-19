@@ -238,7 +238,7 @@ const Packs = () => {
       const packProducts = packProductsResponse.data.map(pp => ({
         productId: pp.productId,
         quantity: pp.quantity,
-        unitPrice: pp.unitPrice,
+        unitPrice: parseFloat(pp.unitPrice) || 0,
         unitTypeId: pp.unitTypeId || null
       }));
       setSelectedProducts(packProducts);
@@ -315,7 +315,7 @@ const Packs = () => {
         return [...prev, {
           productId: product.id,
           quantity: 1,
-          unitPrice: product.price,
+          unitPrice: parseFloat(product.price) || 0,
           unitTypeId: product.unitTypeId || null
         }];
       }
@@ -462,7 +462,7 @@ const Packs = () => {
 
   // Auto-calculate price when selected products change
   React.useEffect(() => {
-    const calculatedPrice = selectedProducts.reduce((total, sp) => total + (sp.quantity * sp.unitPrice), 0);
+    const calculatedPrice = selectedProducts.reduce((total, sp) => total + ((sp.quantity || 0) * (sp.unitPrice || 0)), 0);
     setFormData(prev => ({
       ...prev,
       basePrice: calculatedPrice.toFixed(2),
@@ -936,7 +936,7 @@ const Packs = () => {
                                                       type="number"
                                                       className="form-control"
                                                       placeholder="Qty"
-                                                      value={selectedProduct.quantity}
+                                                      value={selectedProduct.quantity || 1}
                                                       onChange={(e) => handleProductQuantityChange(product.id, e.target.value)}
                                                       min="1"
                                                     />
@@ -961,7 +961,7 @@ const Packs = () => {
                                                       step="0.01"
                                                       className="form-control"
                                                       placeholder="Total Price"
-                                                      value={(selectedProduct.quantity * selectedProduct.unitPrice).toFixed(2)}
+                                                      value={((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
                                                       onChange={(e) => {
                                                         const newTotal = parseFloat(e.target.value);
                                                         if (newTotal > 0 && selectedProduct.quantity > 0) {
@@ -970,7 +970,7 @@ const Packs = () => {
                                                       }}
                                                     />
                                                     <div className="text-muted" style={{ fontSize: '10px', marginTop: '2px' }}>
-                                                      (₹{selectedProduct.unitPrice} per {unitTypes.find(u => u.id === selectedProduct.unitTypeId)?.abbreviation || 'unit'})
+                                                      (₹{selectedProduct.unitPrice || 0} per {unitTypes.find(u => u.id === selectedProduct.unitTypeId)?.abbreviation || 'unit'})
                                                     </div>
                                                   </div>
                                                   <div className="col-1 d-flex justify-content-end">
