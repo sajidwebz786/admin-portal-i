@@ -308,9 +308,18 @@ const Packs = () => {
 
   const handleProductToggle = (product) => {
     setSelectedProducts(prev => {
-      const existing = prev.find(p => p.productId === product.id);
+      const existing = prev.find(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof product.id === 'string' ? parseInt(product.id) : product.id;
+        return pId === newId;
+      });
+      
       if (existing) {
-        return prev.filter(p => p.productId !== product.id);
+        return prev.filter(p => {
+          const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+          const filterId = typeof product.id === 'string' ? parseInt(product.id) : product.id;
+          return pId !== filterId;
+        });
       } else {
         return [...prev, {
           productId: product.id,
@@ -323,12 +332,18 @@ const Packs = () => {
   };
 
   const handleProductQuantityChange = (productId, quantity) => {
+    // Ensure productId is compared as the same type
+    const parsedQuantity = parseInt(quantity) || 1;
     setSelectedProducts(prev =>
-      prev.map(p =>
-        p.productId === productId
-          ? { ...p, quantity: parseInt(quantity) || 1 }
-          : p
-      )
+      prev.map(p => {
+        // Convert both to same type for comparison
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        return pId === newId
+          ? { ...p, quantity: parsedQuantity }
+          : p;
+      })
     );
   };
 
@@ -339,11 +354,15 @@ const Packs = () => {
       return; // Keep the existing value
     }
     setSelectedProducts(prev =>
-      prev.map(p =>
-        p.productId === productId
+      prev.map(p => {
+        // Convert both to same type for comparison
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        return pId === newId
           ? { ...p, unitPrice: parsedPrice }
-          : p
-      )
+          : p;
+      })
     );
   };
 
@@ -436,10 +455,17 @@ const Packs = () => {
   const handleProductUnitTypeChange = (productId, newUnitTypeId) => {
     setSelectedProducts(prev =>
       prev.map(p => {
-        if (p.productId !== productId) return p;
+        // Convert both to same type for comparison
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        if (pId !== newId) return p;
         
         // Get the product to find its original unit type and price
-        const product = products.find(prod => prod.id === productId);
+        const product = products.find(prod => {
+          const prodId = typeof prod.id === 'string' ? parseInt(prod.id) : prod.id;
+          return prodId === newId;
+        });
         if (!product) return { ...p, unitTypeId: parseInt(newUnitTypeId) || null };
         
         // Calculate new price based on unit type conversion
@@ -457,7 +483,13 @@ const Packs = () => {
   };
 
   const removeProductFromPack = (productId) => {
-    setSelectedProducts(prev => prev.filter(p => p.productId !== productId));
+    setSelectedProducts(prev => 
+      prev.filter(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const removeId = typeof productId === 'string' ? parseInt(productId) : productId;
+        return pId !== removeId;
+      })
+    );
   };
 
   // Auto-calculate price when selected products change
@@ -891,8 +923,16 @@ const Packs = () => {
                             <div className="row">
                               {filteredProducts.length > 0 ? (
                                 filteredProducts.map((product) => {
-                                  const isSelected = selectedProducts.some(p => p.productId === product.id);
-                                  const selectedProduct = selectedProducts.find(p => p.productId === product.id);
+                                  // Normalize IDs to handle string/number type mismatches
+                                  const productId = typeof product.id === 'string' ? parseInt(product.id) : product.id;
+                                  const isSelected = selectedProducts.some(p => {
+                                    const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+                                    return pId === productId;
+                                  });
+                                  const selectedProduct = selectedProducts.find(p => {
+                                    const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+                                    return pId === productId;
+                                  });
 
                                   return (
                                     <div key={product.id} className="col-md-6 mb-3">
@@ -960,17 +1000,14 @@ const Packs = () => {
                                                       type="number"
                                                       step="0.01"
                                                       className="form-control"
-                                                      placeholder="Total Price"
-                                                      value={((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
+                                                      placeholder="Unit Price"
+                                                      value={(selectedProduct.unitPrice || 0).toFixed(2)}
                                                       onChange={(e) => {
-                                                        const newTotal = parseFloat(e.target.value);
-                                                        if (newTotal > 0 && selectedProduct.quantity > 0) {
-                                                          handleProductPriceChange(product.id, (newTotal / selectedProduct.quantity).toString());
-                                                        }
+                                                        handleProductPriceChange(product.id, e.target.value);
                                                       }}
                                                     />
                                                     <div className="text-muted" style={{ fontSize: '10px', marginTop: '2px' }}>
-                                                      (₹{selectedProduct.unitPrice || 0} per {unitTypes.find(u => u.id === selectedProduct.unitTypeId)?.abbreviation || 'unit'})
+                                                      Total: ₹{((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
                                                     </div>
                                                   </div>
                                                   <div className="col-1 d-flex justify-content-end">
@@ -1022,7 +1059,11 @@ const Packs = () => {
                           <div className="mt-3 pt-3 border-top">
                             <h6>Selected Products ({selectedProducts.length})</h6>
                             {selectedProducts.map((sp) => {
-                              const product = products.find(p => p.id === sp.productId);
+                              const product = products.find(p => {
+                                const pId = typeof p.id === 'string' ? parseInt(p.id) : p.id;
+                                const spId = typeof sp.productId === 'string' ? parseInt(sp.productId) : sp.productId;
+                                return pId === spId;
+                              });
                               return (
                                 <div key={sp.productId} className="d-flex justify-content-between align-items-center mb-1">
                                   <span>{product?.name}</span>
