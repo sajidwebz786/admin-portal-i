@@ -460,26 +460,13 @@ const Packs = () => {
           return { ...p, useCustomQuantity: true };
         }
         
-        // Parse the quantity value
+        // Parse the quantity value - just update quantity, keep unit price same
         const parsedQty = parseFloat(quantityOption);
-        
-        // Get product for unit type info
-        const product = products.find(prod => {
-          const prodId = typeof prod.id === 'string' ? parseInt(prod.id) : prod.id;
-          return prodId === newId;
-        });
-        
-        // Recalculate price based on quantity change
-        const oldQty = p.quantity || 1;
-        const newQty = parsedQty || 1;
-        const pricePerUnit = (p.unitPrice || product?.price || 0) / oldQty;
-        const newPrice = pricePerUnit * newQty;
         
         return {
           ...p,
-          quantity: newQty,
-          useCustomQuantity: false,
-          unitPrice: parseFloat(newPrice.toFixed(2))
+          quantity: parsedQty || 1,
+          useCustomQuantity: false
         };
       })
     );
@@ -496,20 +483,10 @@ const Packs = () => {
         
         if (pId !== newId) return p;
         
-        // Get product for unit type info
-        const product = products.find(prod => {
-          const prodId = typeof prod.id === 'string' ? parseInt(prod.id) : prod.id;
-          return prodId === newId;
-        });
-        
-        // Recalculate price based on quantity
-        const pricePerUnit = (p.unitPrice || product?.price || 0) / (p.quantity || 1);
-        const newPrice = pricePerUnit * parsedQty;
-        
+        // Just update quantity, keep unit price same
         return {
           ...p,
-          quantity: parsedQty,
-          unitPrice: parseFloat(newPrice.toFixed(2))
+          quantity: parsedQty
         };
       })
     );
