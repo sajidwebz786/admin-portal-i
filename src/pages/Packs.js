@@ -231,12 +231,16 @@ const Packs = () => {
       if (selectedProducts.length > 0) {
         try {
           // Validate all products have valid unitPrice
-          const validProducts = selectedProducts.map(p => ({
-            ...p,
-            unitPrice: parseFloat(p.unitPrice) || p.unitPrice || 0,
-            quantity: parseFloat(p.quantity) || 1,
-            notes: p.notes || null
-          }));
+          const validProducts = selectedProducts.map(p => {
+            // If manually edited, save the itemTotal as unitPrice; otherwise save the per-unit price
+            const finalUnitPrice = p.isManualTotal ? (p.itemTotal || 0) : (parseFloat(p.unitPrice) || p.unitPrice || 0);
+            return {
+              ...p,
+              unitPrice: finalUnitPrice,
+              quantity: parseFloat(p.quantity) || 1,
+              notes: p.notes || null
+            };
+          });
 
           // Check if any product has invalid unitPrice
           const invalidProducts = validProducts.filter(p => !p.unitPrice || p.unitPrice <= 0);
@@ -463,10 +467,15 @@ const Packs = () => {
         // Parse the quantity value - just update quantity, keep unit price same
         const parsedQty = parseFloat(quantityOption);
         
+        // Recalculate item total and clear manual flag
+        const calculatedTotal = (parsedQty || 1) * (p.unitPrice || 0);
+        
         return {
           ...p,
           quantity: parsedQty || 1,
-          useCustomQuantity: false
+          useCustomQuantity: false,
+          itemTotal: calculatedTotal,
+          isManualTotal: false
         };
       })
     );
@@ -483,10 +492,32 @@ const Packs = () => {
         
         if (pId !== newId) return p;
         
-        // Just update quantity, keep unit price same
+        // Clear manually edited total when quantity changes, recalculate
+        const calculatedTotal = (parsedQty * (p.unitPrice || 0));
         return {
           ...p,
-          quantity: parsedQty
+          quantity: parsedQty,
+          itemTotal: calculatedTotal,
+          isManualTotal: false
+        };
+      })
+    );
+  };
+
+  const handleProductItemTotalChange = (productId, totalPrice) => {
+    const parsedTotal = parseFloat(totalPrice);
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        if (pId !== newId) return p;
+        
+        // Mark as manually edited total
+        return {
+          ...p,
+          itemTotal: isNaN(parsedTotal) ? 0 : parsedTotal,
+          isManualTotal: true
         };
       })
     );
@@ -633,7 +664,11 @@ const Packs = () => {
 
   // Auto-calculate price when selected products change
   React.useEffect(() => {
-    const calculatedPrice = selectedProducts.reduce((total, sp) => total + ((sp.quantity || 0) * (sp.unitPrice || 0)), 0);
+    // Use manually edited total if available, otherwise calculate from quantity * unitPrice
+    const calculatedPrice = selectedProducts.reduce((total, sp) => {
+      const itemValue = sp.isManualTotal ? (sp.itemTotal || 0) : ((sp.quantity || 1) * (sp.unitPrice || 0));
+      return total + itemValue;
+    }, 0);
     setFormData(prev => ({
       ...prev,
       basePrice: calculatedPrice.toFixed(2),
@@ -1117,7 +1152,8 @@ const Packs = () => {
                                             {isSelected && (
                                               <div className="mt-3">
                                                 <div className="row">
-                                                  <div className="col-3">
+                                                  <div className="col-2">
+                                                    <label className="small text-muted">Qty</label>
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.useCustomQuantity ? 'custom' : (selectedProduct.quantity || 1).toString()}
@@ -1141,7 +1177,8 @@ const Packs = () => {
                                                       />
                                                     )}
                                                   </div>
-                                                  <div className="col-3">
+                                                  <div className="col-2">
+                                                    <label className="small text-muted">Unit</label>
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.unitTypeId || product.unitTypeId || ''}
@@ -1155,22 +1192,32 @@ const Packs = () => {
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-4">
+                                                  <div className="col-2">
+                                                    <label className="small text-muted">Unit Price</label>
                                                     <input
                                                       type="number"
                                                       step="0.01"
                                                       className="form-control"
-                                                      placeholder="Unit Price"
+                                                      placeholder="Price"
                                                       value={(selectedProduct.unitPrice || 0).toFixed(2)}
                                                       onChange={(e) => {
                                                         handleProductPriceChange(product.id, e.target.value);
                                                       }}
                                                     />
-                                                    <div className="text-muted" style={{ fontSize: '10px', marginTop: '2px' }}>
-                                                      Total: ₹{((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
-                                                    </div>
                                                   </div>
-                                                  <div className="col-2 d-flex justify-content-end">
+                                                  <div className="col-2">
+                                                    <label className="small text-muted">Item Total</label>
+                                                    <input
+                                                      type="number"
+                                                      step="0.01"
+                                                      className={`form-control ${selectedProduct.isManualTotal ? 'border-warning' : ''}`}
+                                                      placeholder="Total"
+                                                      value={(selectedProduct.itemTotal || (selectedProduct.quantity || 1) * (selectedProduct.unitPrice || 0)).toFixed(2)}
+                                                      onChange={(e) => handleProductItemTotalChange(product.id, e.target.value)}
+                                                      title={selectedProduct.isManualTotal ? 'Manually edited' : 'Auto-calculated'}
+                                                    />
+                                                  </div>
+                                                  <div className="col-2 d-flex align-items-end">
                                                     <button
                                                       type="button"
                                                       onClick={() => removeProductFromPack(product.id)}
@@ -1236,11 +1283,13 @@ const Packs = () => {
                                 const spId = typeof sp.productId === 'string' ? parseInt(sp.productId) : sp.productId;
                                 return pId === spId;
                               });
+                              // Use manually edited total if available, otherwise calculate from quantity * unitPrice
+                              const displayTotal = sp.isManualTotal ? (sp.itemTotal || 0) : ((sp.quantity || 1) * (sp.unitPrice || 0));
                               return (
                                 <div key={sp.productId} className="d-flex justify-content-between align-items-center mb-1">
                                   <span>{product?.name}</span>
                                   <small className="text-muted">
-                                    {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{(sp.quantity * sp.unitPrice).toFixed(2)}
+                                    {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{displayTotal.toFixed(2)}
                                     {sp.notes && <span className="text-info ml-1" title={sp.notes}>*</span>}
                                   </small>
                                 </div>
@@ -1248,7 +1297,10 @@ const Packs = () => {
                             })}
                             <div className="d-flex justify-content-between align-items-center font-weight-bold border-top pt-2">
                               <span>Total Value (Base Price):</span>
-                              <span className="text-success">₹{selectedProducts.reduce((total, sp) => total + (sp.quantity * sp.unitPrice), 0).toFixed(2)}</span>
+                              <span className="text-success">₹{selectedProducts.reduce((total, sp) => {
+                                const itemValue = sp.isManualTotal ? (sp.itemTotal || 0) : ((sp.quantity || 1) * (sp.unitPrice || 0));
+                                return total + itemValue;
+                              }, 0).toFixed(2)}</span>
                             </div>
                             {formData.finalPrice && parseFloat(formData.finalPrice) < parseFloat(formData.basePrice) && (
                               <div className="text-warning small mt-1">
