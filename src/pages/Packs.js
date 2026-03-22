@@ -232,12 +232,14 @@ const Packs = () => {
         try {
           // Validate all products have valid unitPrice
           const validProducts = selectedProducts.map(p => {
-            // If manually edited, save the itemTotal as unitPrice; otherwise save the per-unit price
-            const finalUnitPrice = p.isManualTotal ? (p.itemTotal || 0) : (parseFloat(p.unitPrice) || p.unitPrice || 0);
+            // If manually edited, calculate the new unitPrice from itemTotal / quantity
+            // Otherwise, use the per-unit price from the product
+            const qty = parseFloat(p.quantity) || 1;
+            const finalUnitPrice = p.isManualTotal ? ((parseFloat(p.itemTotal) || 0) / qty) : (parseFloat(p.unitPrice) || 0);
             return {
               ...p,
               unitPrice: finalUnitPrice,
-              quantity: parseFloat(p.quantity) || 1,
+              quantity: qty,
               notes: p.notes || null
             };
           });
@@ -304,13 +306,20 @@ const Packs = () => {
     // Load existing pack products first
     try {
       const packProductsResponse = await packProductService.getByPackId(pack.id);
-      const packProducts = packProductsResponse.data.map(pp => ({
-        productId: pp.productId,
-        quantity: pp.quantity,
-        unitPrice: parseFloat(pp.unitPrice) || 0,
-        unitTypeId: pp.unitTypeId || null,
-        notes: pp.notes || ''
-      }));
+      const packProducts = packProductsResponse.data.map(pp => {
+        const qty = parseFloat(pp.quantity) || 1;
+        const price = parseFloat(pp.unitPrice) || 0;
+        const calculatedTotal = qty * price;
+        return {
+          productId: pp.productId,
+          quantity: qty,
+          unitPrice: price,
+          unitTypeId: pp.unitTypeId || null,
+          notes: pp.notes || '',
+          itemTotal: calculatedTotal,
+          isManualTotal: false
+        };
+      });
       setSelectedProducts(packProducts);
 
       // Calculate base price from existing products
@@ -406,11 +415,15 @@ const Packs = () => {
           return pId !== filterId;
         });
       } else {
+        const unitPrice = parseFloat(product.price) || 0;
+        const quantity = 1;
         return [...prev, {
           productId: product.id,
-          quantity: 1,
-          unitPrice: parseFloat(product.price) || 0,
-          unitTypeId: product.unitTypeId || null
+          quantity: quantity,
+          unitPrice: unitPrice,
+          unitTypeId: product.unitTypeId || null,
+          itemTotal: quantity * unitPrice,
+          isManualTotal: false
         }];
       }
     });
