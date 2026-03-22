@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { packService, categoryService, productService, packProductService, unitTypeService, packTypeService } from '../services/api';
 import { authService } from '../services/api';
@@ -40,6 +40,70 @@ const Packs = () => {
     validUntil: '',
   });
   const [selectedProducts, setSelectedProducts] = useState([]);
+
+  // Standard unit types to show in dropdown (filter out sub-units like 500G, 250G, etc.)
+  const standardUnitTypes = unitTypes.filter(u => {
+    const abbr = (u.abbreviation || '').toUpperCase().trim();
+    const standardUnits = ['KG', 'G', 'L', 'ML', 'PC', 'PCS', 'DOZEN', 'DZ', 'PACK', 'PKT', 'BUNCH'];
+    // Exclude sub-units
+    const subUnits = ['500G', '250G', '100G', '75G', '200G', '1/2KG', '0.5KG', 'HALF KG', '500ML', '250ML', '100ML', '1/2L', '0.5L', 'HALF L', '1/4KG', '0.25KG', '1/4L', '0.25L', '6PCS', '1/2DZ'];
+    return standardUnits.includes(abbr) && !subUnits.includes(abbr);
+  });
+
+  // Quantity options based on unit type
+  const getQuantityOptions = (unitTypeId) => {
+    if (!unitTypeId) return [];
+    const unitType = unitTypes.find(u => u.id === parseInt(unitTypeId));
+    if (!unitType) return [];
+    const abbr = (unitType.abbreviation || '').toUpperCase().trim();
+    
+    // For pieces/items - allow custom input
+    if (['PC', 'PCS', 'PACK', 'PKT', 'BUNCH'].includes(abbr)) {
+      return [
+        { value: '1', label: '1 PC' },
+        { value: '2', label: '2 PCs' },
+        { value: '3', label: '3 PCs' },
+        { value: '4', label: '4 PCs' },
+        { value: '5', label: '5 PCs' },
+        { value: '6', label: '6 PCs' },
+        { value: 'custom', label: 'Custom...' },
+      ];
+    }
+    
+    // For KG/L based units
+    if (abbr === 'KG' || abbr === 'L') {
+      return [
+        { value: '1', label: `1 ${abbr}` },
+        { value: '0.5', label: `1/2 ${abbr} (0.5)` },
+        { value: '0.25', label: `1/4 ${abbr} (0.25)` },
+        { value: 'custom', label: 'Custom...' },
+      ];
+    }
+    
+    // For G/ML based units
+    if (abbr === 'G' || abbr === 'ML') {
+      return [
+        { value: '500', label: abbr === 'G' ? '500 G' : '500 ML' },
+        { value: '250', label: abbr === 'G' ? '250 G' : '250 ML' },
+        { value: '100', label: abbr === 'G' ? '100 G' : '100 ML' },
+        { value: 'custom', label: 'Custom...' },
+      ];
+    }
+    
+    // For dozen
+    if (abbr === 'DOZEN' || abbr === 'DZ') {
+      return [
+        { value: '1', label: '1 Dozen (12)' },
+        { value: '0.5', label: 'Half Dozen (6)' },
+        { value: 'custom', label: 'Custom...' },
+      ];
+    }
+    
+    return [
+      { value: '1', label: '1' },
+      { value: 'custom', label: 'Custom...' },
+    ];
+  };
 
   useEffect(() => {
     fetchData();
@@ -170,7 +234,8 @@ const Packs = () => {
           const validProducts = selectedProducts.map(p => ({
             ...p,
             unitPrice: parseFloat(p.unitPrice) || p.unitPrice || 0,
-            quantity: parseInt(p.quantity) || 1
+            quantity: parseFloat(p.quantity) || 1,
+            notes: p.notes || null
           }));
 
           // Check if any product has invalid unitPrice
@@ -239,7 +304,8 @@ const Packs = () => {
         productId: pp.productId,
         quantity: pp.quantity,
         unitPrice: parseFloat(pp.unitPrice) || 0,
-        unitTypeId: pp.unitTypeId || null
+        unitTypeId: pp.unitTypeId || null,
+        notes: pp.notes || ''
       }));
       setSelectedProducts(packProducts);
 
@@ -361,6 +427,87 @@ const Packs = () => {
         
         return pId === newId
           ? { ...p, unitPrice: parsedPrice }
+          : p;
+      })
+    );
+  };
+
+  const handleProductQuantityOptionChange = (productId, quantityOption) => {
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        if (pId !== newId) return p;
+        
+        // If custom, keep the existing quantity but set a flag
+        if (quantityOption === 'custom') {
+          return { ...p, useCustomQuantity: true };
+        }
+        
+        // Parse the quantity value
+        const parsedQty = parseFloat(quantityOption);
+        
+        // Get product for unit type info
+        const product = products.find(prod => {
+          const prodId = typeof prod.id === 'string' ? parseInt(prod.id) : prod.id;
+          return prodId === newId;
+        });
+        
+        // Recalculate price based on quantity change
+        const oldQty = p.quantity || 1;
+        const newQty = parsedQty || 1;
+        const pricePerUnit = (p.unitPrice || product?.price || 0) / oldQty;
+        const newPrice = pricePerUnit * newQty;
+        
+        return {
+          ...p,
+          quantity: newQty,
+          useCustomQuantity: false,
+          unitPrice: parseFloat(newPrice.toFixed(2))
+        };
+      })
+    );
+  };
+
+  const handleProductCustomQuantityChange = (productId, customQty) => {
+    const parsedQty = parseFloat(customQty);
+    if (isNaN(parsedQty) || parsedQty <= 0) return;
+    
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        if (pId !== newId) return p;
+        
+        // Get product for unit type info
+        const product = products.find(prod => {
+          const prodId = typeof prod.id === 'string' ? parseInt(prod.id) : prod.id;
+          return prodId === newId;
+        });
+        
+        // Recalculate price based on quantity
+        const pricePerUnit = (p.unitPrice || product?.price || 0) / (p.quantity || 1);
+        const newPrice = pricePerUnit * parsedQty;
+        
+        return {
+          ...p,
+          quantity: parsedQty,
+          unitPrice: parseFloat(newPrice.toFixed(2))
+        };
+      })
+    );
+  };
+
+  const handleProductNotesChange = (productId, notes) => {
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        return pId === newId
+          ? { ...p, notes: notes }
           : p;
       })
     );
@@ -972,30 +1119,44 @@ const Packs = () => {
                                               <div className="mt-3">
                                                 <div className="row">
                                                   <div className="col-3">
-                                                    <input
-                                                      type="number"
+                                                    <select
                                                       className="form-control"
-                                                      placeholder="Qty"
-                                                      value={selectedProduct.quantity || 1}
-                                                      onChange={(e) => handleProductQuantityChange(product.id, e.target.value)}
-                                                      min="1"
-                                                    />
+                                                      value={selectedProduct.useCustomQuantity ? 'custom' : (selectedProduct.quantity || 1).toString()}
+                                                      onChange={(e) => handleProductQuantityOptionChange(product.id, e.target.value)}
+                                                    >
+                                                      {getQuantityOptions(selectedProduct.unitTypeId || product.unitTypeId).map((opt) => (
+                                                        <option key={opt.value} value={opt.value}>
+                                                          {opt.label}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                    {selectedProduct.useCustomQuantity && (
+                                                      <input
+                                                        type="number"
+                                                        className="form-control mt-1"
+                                                        placeholder="Enter qty"
+                                                        value={selectedProduct.quantity || ''}
+                                                        onChange={(e) => handleProductCustomQuantityChange(product.id, e.target.value)}
+                                                        min="0.01"
+                                                        step="0.01"
+                                                      />
+                                                    )}
                                                   </div>
                                                   <div className="col-3">
                                                     <select
                                                       className="form-control"
-                                                      value={selectedProduct.unitTypeId || ''}
+                                                      value={selectedProduct.unitTypeId || product.unitTypeId || ''}
                                                       onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
                                                     >
                                                       <option value="">Unit</option>
-                                                      {unitTypes.map((u) => (
+                                                      {standardUnitTypes.map((u) => (
                                                         <option key={u.id} value={u.id}>
                                                           {u.abbreviation}
                                                         </option>
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-5">
+                                                  <div className="col-4">
                                                     <input
                                                       type="number"
                                                       step="0.01"
@@ -1010,7 +1171,7 @@ const Packs = () => {
                                                       Total: ₹{((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
                                                     </div>
                                                   </div>
-                                                  <div className="col-1 d-flex justify-content-end">
+                                                  <div className="col-2 d-flex justify-content-end">
                                                     <button
                                                       type="button"
                                                       onClick={() => removeProductFromPack(product.id)}
@@ -1030,6 +1191,18 @@ const Packs = () => {
                                                     >
                                                       ×
                                                     </button>
+                                                  </div>
+                                                </div>
+                                                {/* Notes field for price variation */}
+                                                <div className="row mt-2">
+                                                  <div className="col-12">
+                                                    <input
+                                                      type="text"
+                                                      className="form-control"
+                                                      placeholder="Notes (optional): e.g., small PC, medium PC, large PC - reason for price variation"
+                                                      value={selectedProduct.notes || ''}
+                                                      onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
+                                                    />
                                                   </div>
                                                 </div>
                                               </div>
@@ -1069,6 +1242,7 @@ const Packs = () => {
                                   <span>{product?.name}</span>
                                   <small className="text-muted">
                                     {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{(sp.quantity * sp.unitPrice).toFixed(2)}
+                                    {sp.notes && <span className="text-info ml-1" title={sp.notes}>*</span>}
                                   </small>
                                 </div>
                               );
