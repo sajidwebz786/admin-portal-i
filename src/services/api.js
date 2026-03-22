@@ -151,7 +151,9 @@ export const packService = {
   update: (id, data) => api.put(`/packs/${id}`, data),
   delete: (id) => api.delete(`/packs/${id}`),
   updatePrice: (id, price) => api.patch(`/packs/${id}/price`, { price }),
-  toggleStatus: (id, isActive) => api.patch(`/packs/${id}`, { isActive }),
+  toggleStatus: (id) => api.patch(`/packs/${id}/toggle-status`),
+  activate: (id) => api.patch(`/packs/${id}/activate`),
+  deactivate: (id) => api.patch(`/packs/${id}/deactivate`),
   resetAll: () => api.post('/admin/reset-packs-only'),
 };
 
