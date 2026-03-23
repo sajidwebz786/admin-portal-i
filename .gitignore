@@ -134,3 +134,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+build/asset-manifest.json
+build/index.html
+build/static/css/main.74e7e5dd.css
+build/static/css/main.74e7e5dd.css.map
+build/static/js/main.631e6256.js
+build/static/js/main.631e6256.js.LICENSE.txt
+build/static/js/main.631e6256.js.map

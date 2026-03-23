@@ -809,7 +809,7 @@ const Packs = () => {
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={handleResetAllPacks}
-                    style={{ marginRight: '10px' }}
+                    style={{ marginRight: '10px', display: 'none' }}
                     title="Delete all packs and reset IDs to start from 1"
                   >
                     <i className="fas fa-trash-alt"></i> Reset All
@@ -1175,13 +1175,33 @@ const Packs = () => {
                                             </div>
 
                                             {isSelected && (
-                                              <div className="mt-3">
+                                              <div className="mt-3" style={{ borderTop: '1px solid #e3e6f0', paddingTop: '12px' }}>
+                                                {/* Field Labels Row */}
+                                                <div className="row mb-2">
+                                                  <div className="col-md-2">
+                                                    <small className="text-muted font-weight-bold">Quantity</small>
+                                                  </div>
+                                                  <div className="col-md-2">
+                                                    <small className="text-muted font-weight-bold">Unit Type</small>
+                                                  </div>
+                                                  <div className="col-md-3">
+                                                    <small className="text-muted font-weight-bold">Unit Price (₹)</small>
+                                                  </div>
+                                                  <div className="col-md-3">
+                                                    <small className="text-muted font-weight-bold">Total Amount (₹)</small>
+                                                  </div>
+                                                  <div className="col-md-2">
+                                                    <small className="text-muted font-weight-bold">Action</small>
+                                                  </div>
+                                                </div>
+                                                {/* Input Fields Row */}
                                                 <div className="row">
-                                                  <div className="col-1">
+                                                  <div className="col-md-2">
                                                     <select
-                                                      className="form-control"
+                                                      className="form-control form-control-sm"
                                                       value={selectedProduct.useCustomQuantity ? 'custom' : (selectedProduct.quantity || 1).toString()}
                                                       onChange={(e) => handleProductQuantityOptionChange(product.id, e.target.value)}
+                                                      title="Select or enter quantity"
                                                     >
                                                       {getQuantityOptions(selectedProduct.unitTypeId || product.unitTypeId).map((opt) => (
                                                         <option key={opt.value} value={opt.value}>
@@ -1192,8 +1212,8 @@ const Packs = () => {
                                                     {selectedProduct.useCustomQuantity && (
                                                       <input
                                                         type="number"
-                                                        className="form-control mt-1"
-                                                        placeholder="Enter qty"
+                                                        className="form-control form-control-sm mt-1"
+                                                        placeholder="Enter quantity"
                                                         value={selectedProduct.quantity || ''}
                                                         onChange={(e) => handleProductCustomQuantityChange(product.id, e.target.value)}
                                                         min="0.01"
@@ -1201,13 +1221,14 @@ const Packs = () => {
                                                       />
                                                     )}
                                                   </div>
-                                                  <div className="col-1">
+                                                  <div className="col-md-2">
                                                     <select
-                                                      className="form-control"
+                                                      className="form-control form-control-sm"
                                                       value={selectedProduct.unitTypeId || product.unitTypeId || ''}
                                                       onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
+                                                      title="Select unit of measurement"
                                                     >
-                                                      <option value="">Unit</option>
+                                                      <option value="">Select Unit</option>
                                                       {standardUnitTypes.map((u) => (
                                                         <option key={u.id} value={u.id}>
                                                           {u.abbreviation}
@@ -1215,24 +1236,25 @@ const Packs = () => {
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-4">
+                                                  <div className="col-md-3">
                                                     <input
                                                       type="number"
                                                       step="0.01"
-                                                      className="form-control"
-                                                      placeholder="Unit Price"
+                                                      className="form-control form-control-sm"
+                                                      placeholder="0.00"
                                                       value={(selectedProduct.unitPrice || 0).toFixed(2)}
                                                       onChange={(e) => {
                                                         handleProductPriceChange(product.id, e.target.value);
                                                       }}
+                                                      title="Price per unit"
                                                     />
                                                   </div>
-                                                  <div className="col-4">
+                                                  <div className="col-md-3">
                                                     <input
                                                       type="number"
                                                       step="0.01"
-                                                      className={`form-control ${selectedProduct.amountEdited ? 'border-warning' : ''}`}
-                                                      placeholder="Amount (Qty x Price)"
+                                                      className={`form-control form-control-sm ${selectedProduct.amountEdited ? 'border-warning' : ''}`}
+                                                      placeholder="0.00"
                                                       value={(selectedProduct.amount || 0).toFixed(2)}
                                                       onChange={(e) => {
                                                         handleProductAmountChange(product.id, e.target.value);
@@ -1245,35 +1267,32 @@ const Packs = () => {
                                                       </div>
                                                     )}
                                                   </div>
-                                                  <div className="col-2 d-flex justify-content-end">
+                                                  <div className="col-md-2 d-flex align-items-center justify-content-center">
                                                     <button
                                                       type="button"
                                                       onClick={() => removeProductFromPack(product.id)}
-                                                      title="Remove"
+                                                      title="Remove this product"
+                                                      className="btn btn-sm btn-danger"
                                                       style={{ 
-                                                        background: 'none', 
-                                                        border: 'none', 
-                                                        cursor: 'pointer', 
-                                                        fontSize: '24px', 
-                                                        color: '#dc3545',
-                                                        padding: '0',
-                                                        lineHeight: '1',
+                                                        padding: '4px 8px',
+                                                        fontSize: '14px',
                                                         transition: 'transform 0.2s'
                                                       }}
-                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.3)'}
+                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
                                                       onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                                                     >
-                                                      ×
+                                                      Remove
                                                     </button>
                                                   </div>
                                                 </div>
                                                 {/* Notes field for price variation */}
-                                                <div className="row mt-2">
+                                                <div className="row mt-3 pt-2" style={{ borderTop: '1px solid #e3e6f0' }}>
                                                   <div className="col-12">
+                                                    <label className="small text-muted font-weight-bold mb-1">Notes (optional)</label>
                                                     <input
                                                       type="text"
-                                                      className="form-control"
-                                                      placeholder="Notes (optional): e.g., small PC, medium PC, large PC - reason for price variation"
+                                                      className="form-control form-control-sm"
+                                                      placeholder="e.g., small PC, medium PC, large PC - reason for price variation"
                                                       value={selectedProduct.notes || ''}
                                                       onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
                                                     />
