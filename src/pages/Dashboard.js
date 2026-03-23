@@ -365,15 +365,15 @@ const Dashboard = () => {
 
           {/* Pending Deliveries - New Orders from Mobile App */}
           <div className="row mb-4">
-            <div className="col-12">
-              <div className="card card-success">
+            <div className="col-12 d-flex justify-content-center">
+              <div className="card card-success" style={{ maxWidth: '1100px', width: '100%' }}>
                 <div className="card-header">
                   <h3 className="card-title">
                     <i className="fas fa-truck mr-2"></i>
                     Pending Deliveries - Action Required
                   </h3>
                 </div>
-                <div className="card-body table-responsive p-0">
+                <div className="card-body table-responsive p-0" style={{ maxWidth: '1050px', margin: '0 auto' }}>
                   {recentOrders.length === 0 ? (
                     <div className="text-center text-muted py-4">
                       <i className="fas fa-check-circle text-success mr-2"></i>
