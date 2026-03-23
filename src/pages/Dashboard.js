@@ -425,13 +425,13 @@ const Dashboard = () => {
                             </td>
                             <td>
                               {order.shippingAddress ? (
-                                <div className="small">
+                                <div className="small" style={{ maxWidth: '260px', whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.4' }}>
                                   {order.shippingAddress.address}, {order.shippingAddress.city}
                                   {order.shippingAddress.state && `, ${order.shippingAddress.state}`}
                                   {order.shippingAddress.zipCode && ` - ${order.shippingAddress.zipCode}`}
                                 </div>
                               ) : order.deliveryAddress ? (
-                                <div className="small">
+                                <div className="small" style={{ maxWidth: '260px', whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.4' }}>
                                   {typeof order.deliveryAddress === 'object' 
                                     ? `${order.deliveryAddress.address}, ${order.deliveryAddress.city}` 
                                     : order.deliveryAddress}
