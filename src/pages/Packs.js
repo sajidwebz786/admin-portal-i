@@ -1179,23 +1179,38 @@ const Packs = () => {
                                                 {/* Field Labels Row */}
                                                 <div className="row mb-2">
                                                   <div className="col-md-2">
-                                                    <small className="text-muted font-weight-bold">Quantity</small>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Quantity</span>
                                                   </div>
                                                   <div className="col-md-2">
-                                                    <small className="text-muted font-weight-bold">Unit Type</small>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Unit Type</span>
                                                   </div>
                                                   <div className="col-md-3">
-                                                    <small className="text-muted font-weight-bold">Unit Price (₹)</small>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Unit Price (₹)</span>
                                                   </div>
                                                   <div className="col-md-3">
-                                                    <small className="text-muted font-weight-bold">Total Amount (₹)</small>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Total Amount (₹)</span>
                                                   </div>
                                                   <div className="col-md-2">
-                                                    <small className="text-muted font-weight-bold">Action</small>
+                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Action</span>
                                                   </div>
                                                 </div>
                                                 {/* Input Fields Row */}
                                                 <div className="row">
+                                                  <div className="col-md-2">
+                                                    <select
+                                                      className="form-control form-control-sm"
+                                                      value={selectedProduct.unitTypeId || product.unitTypeId || ''}
+                                                      onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
+                                                      title="Select unit of measurement"
+                                                    >
+                                                      <option value="">Select Unit</option>
+                                                      {standardUnitTypes.map((u) => (
+                                                        <option key={u.id} value={u.id}>
+                                                          {u.abbreviation}
+                                                        </option>
+                                                      ))}
+                                                    </select>
+                                                  </div>
                                                   <div className="col-md-2">
                                                     <select
                                                       className="form-control form-control-sm"
@@ -1220,21 +1235,6 @@ const Packs = () => {
                                                         step="0.01"
                                                       />
                                                     )}
-                                                  </div>
-                                                  <div className="col-md-2">
-                                                    <select
-                                                      className="form-control form-control-sm"
-                                                      value={selectedProduct.unitTypeId || product.unitTypeId || ''}
-                                                      onChange={(e) => handleProductUnitTypeChange(product.id, e.target.value)}
-                                                      title="Select unit of measurement"
-                                                    >
-                                                      <option value="">Select Unit</option>
-                                                      {standardUnitTypes.map((u) => (
-                                                        <option key={u.id} value={u.id}>
-                                                          {u.abbreviation}
-                                                        </option>
-                                                      ))}
-                                                    </select>
                                                   </div>
                                                   <div className="col-md-3">
                                                     <input
@@ -1267,27 +1267,10 @@ const Packs = () => {
                                                       </div>
                                                     )}
                                                   </div>
-                                                  <div className="col-md-2 d-flex align-items-center justify-content-center">
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => removeProductFromPack(product.id)}
-                                                      title="Remove this product"
-                                                      className="btn btn-sm btn-danger"
-                                                      style={{ 
-                                                        padding: '4px 8px',
-                                                        fontSize: '14px',
-                                                        transition: 'transform 0.2s'
-                                                      }}
-                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                                                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                                    >
-                                                      Remove
-                                                    </button>
-                                                  </div>
                                                 </div>
-                                                {/* Notes field for price variation */}
+                                                {/* Notes field for price variation and Remove button */}
                                                 <div className="row mt-3 pt-2" style={{ borderTop: '1px solid #e3e6f0' }}>
-                                                  <div className="col-12">
+                                                  <div className="col-md-10">
                                                     <label className="small text-muted font-weight-bold mb-1">Notes (optional)</label>
                                                     <input
                                                       type="text"
@@ -1296,6 +1279,24 @@ const Packs = () => {
                                                       value={selectedProduct.notes || ''}
                                                       onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
                                                     />
+                                                  </div>
+                                                  <div className="col-md-2 d-flex align-items-end justify-content-center">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => removeProductFromPack(product.id)}
+                                                      title="Remove this product"
+                                                      className="btn btn-sm btn-danger"
+                                                      style={{ 
+                                                        padding: '4px 8px',
+                                                        fontSize: '14px',
+                                                        transition: 'transform 0.2s',
+                                                        marginBottom: '4px'
+                                                      }}
+                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                                                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                    >
+                                                      Remove
+                                                    </button>
                                                   </div>
                                                 </div>
                                               </div>
