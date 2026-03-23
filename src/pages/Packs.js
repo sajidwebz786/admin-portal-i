@@ -232,9 +232,11 @@ const Packs = () => {
         try {
           // Validate all products have valid unitPrice
           const validProducts = selectedProducts.map(p => ({
-            ...p,
-            unitPrice: parseFloat(p.unitPrice) || p.unitPrice || 0,
+            productId: p.productId,
             quantity: parseFloat(p.quantity) || 1,
+            unitPrice: parseFloat(p.unitPrice) || p.unitPrice || 0,
+            amount: parseFloat(p.amount) || (parseFloat(p.quantity) || 1) * (parseFloat(p.unitPrice) || p.unitPrice || 0),
+            unitTypeId: p.unitTypeId || null,
             notes: p.notes || null
           }));
 
@@ -305,12 +307,20 @@ const Packs = () => {
         quantity: pp.quantity,
         unitPrice: parseFloat(pp.unitPrice) || 0,
         unitTypeId: pp.unitTypeId || null,
-        notes: pp.notes || ''
+        notes: pp.notes || '',
+        // Use stored amount if available, otherwise calculate from quantity * unitPrice
+        amount: pp.amount !== undefined && pp.amount !== null ? parseFloat(pp.amount) : (pp.quantity * (parseFloat(pp.unitPrice) || 0)),
+        // If amount was stored, consider it as edited (manually set)
+        amountEdited: pp.amount !== undefined && pp.amount !== null
       }));
       setSelectedProducts(packProducts);
 
-      // Calculate base price from existing products
-      const calculatedBasePrice = packProducts.reduce((total, sp) => total + (sp.quantity * sp.unitPrice), 0);
+      // Calculate base price from existing products (use stored amount if edited)
+      const calculatedBasePrice = packProducts.reduce((total, sp) => {
+        // Use stored amount if it was edited, otherwise calculate from quantity * unitPrice
+        const itemAmount = sp.amountEdited && sp.amount !== undefined ? sp.amount : (sp.quantity * sp.unitPrice);
+        return total + itemAmount;
+      }, 0);
 
       setFormData({
         name: pack.name,
@@ -402,10 +412,14 @@ const Packs = () => {
           return pId !== filterId;
         });
       } else {
+        const defaultQty = 1;
+        const defaultPrice = parseFloat(product.price) || 0;
         return [...prev, {
           productId: product.id,
-          quantity: 1,
-          unitPrice: parseFloat(product.price) || 0,
+          quantity: defaultQty,
+          unitPrice: defaultPrice,
+          amount: defaultQty * defaultPrice, // Default calculated amount
+          amountEdited: false, // Track if amount was manually edited
           unitTypeId: product.unitTypeId || null
         }];
       }
@@ -440,9 +454,17 @@ const Packs = () => {
         const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
         const newId = typeof productId === 'string' ? parseInt(productId) : productId;
         
-        return pId === newId
-          ? { ...p, unitPrice: parsedPrice }
-          : p;
+        if (pId === newId) {
+          const newAmount = p.quantity * parsedPrice;
+          // If amount was not manually edited, recalculate it
+          if (!p.amountEdited) {
+            return { ...p, unitPrice: parsedPrice, amount: newAmount };
+          } else {
+            // If amount was edited, just update unit price but keep edited amount
+            return { ...p, unitPrice: parsedPrice };
+          }
+        }
+        return p;
       })
     );
   };
@@ -463,9 +485,13 @@ const Packs = () => {
         // Parse the quantity value - just update quantity, keep unit price same
         const parsedQty = parseFloat(quantityOption);
         
+        // Recalculate amount if not edited manually
+        const newAmount = p.amountEdited ? p.amount : (parsedQty || 1) * p.unitPrice;
+        
         return {
           ...p,
           quantity: parsedQty || 1,
+          amount: newAmount,
           useCustomQuantity: false
         };
       })
@@ -483,11 +509,36 @@ const Packs = () => {
         
         if (pId !== newId) return p;
         
-        // Just update quantity, keep unit price same
+        // Just update quantity, keep unit price same, recalculate amount if not edited
+        const newAmount = p.amountEdited ? p.amount : parsedQty * p.unitPrice;
         return {
           ...p,
-          quantity: parsedQty
+          quantity: parsedQty,
+          amount: newAmount
         };
+      })
+    );
+  };
+
+  // New handler for amount change - when user manually edits the amount
+  const handleProductAmountChange = (productId, newAmount) => {
+    const parsedAmount = parseFloat(newAmount);
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
+      return; // Keep the existing value
+    }
+    setSelectedProducts(prev =>
+      prev.map(p => {
+        const pId = typeof p.productId === 'string' ? parseInt(p.productId) : p.productId;
+        const newId = typeof productId === 'string' ? parseInt(productId) : productId;
+        
+        if (pId === newId) {
+          return { 
+            ...p, 
+            amount: parsedAmount, 
+            amountEdited: true // Mark as manually edited
+          };
+        }
+        return p;
       })
     );
   };
@@ -612,10 +663,14 @@ const Packs = () => {
         const ratio = getUnitConversionRatio(oldUnitTypeId, parseInt(newUnitTypeId), products, unitTypes);
         const newPrice = (p.unitPrice || product.price) * ratio;
         
+        // Recalculate amount if not manually edited
+        const newAmount = p.amountEdited ? p.amount : p.quantity * parseFloat(newPrice.toFixed(2));
+        
         return {
           ...p,
           unitTypeId: parseInt(newUnitTypeId) || null,
-          unitPrice: parseFloat(newPrice.toFixed(2))
+          unitPrice: parseFloat(newPrice.toFixed(2)),
+          amount: newAmount
         };
       })
     );
@@ -632,8 +687,13 @@ const Packs = () => {
   };
 
   // Auto-calculate price when selected products change
+  // Use edited amount if available, otherwise calculate from quantity * unitPrice
   React.useEffect(() => {
-    const calculatedPrice = selectedProducts.reduce((total, sp) => total + ((sp.quantity || 0) * (sp.unitPrice || 0)), 0);
+    const calculatedPrice = selectedProducts.reduce((total, sp) => {
+      // If amount was manually edited, use that value; otherwise calculate from qty * unitPrice
+      const itemAmount = sp.amountEdited && sp.amount !== undefined ? sp.amount : ((sp.quantity || 0) * (sp.unitPrice || 0));
+      return total + itemAmount;
+    }, 0);
     setFormData(prev => ({
       ...prev,
       basePrice: calculatedPrice.toFixed(2),
@@ -1117,7 +1177,7 @@ const Packs = () => {
                                             {isSelected && (
                                               <div className="mt-3">
                                                 <div className="row">
-                                                  <div className="col-3">
+                                                  <div className="col-2">
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.useCustomQuantity ? 'custom' : (selectedProduct.quantity || 1).toString()}
@@ -1141,7 +1201,7 @@ const Packs = () => {
                                                       />
                                                     )}
                                                   </div>
-                                                  <div className="col-3">
+                                                  <div className="col-2">
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.unitTypeId || product.unitTypeId || ''}
@@ -1155,7 +1215,7 @@ const Packs = () => {
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-4">
+                                                  <div className="col-3">
                                                     <input
                                                       type="number"
                                                       step="0.01"
@@ -1166,9 +1226,24 @@ const Packs = () => {
                                                         handleProductPriceChange(product.id, e.target.value);
                                                       }}
                                                     />
-                                                    <div className="text-muted" style={{ fontSize: '10px', marginTop: '2px' }}>
-                                                      Total: ₹{((selectedProduct.quantity || 0) * (selectedProduct.unitPrice || 0)).toFixed(2)}
-                                                    </div>
+                                                  </div>
+                                                  <div className="col-3">
+                                                    <input
+                                                      type="number"
+                                                      step="0.01"
+                                                      className={`form-control ${selectedProduct.amountEdited ? 'border-warning' : ''}`}
+                                                      placeholder="Amount (Qty x Price)"
+                                                      value={(selectedProduct.amount || 0).toFixed(2)}
+                                                      onChange={(e) => {
+                                                        handleProductAmountChange(product.id, e.target.value);
+                                                      }}
+                                                      title={selectedProduct.amountEdited ? 'Amount manually edited' : 'Auto-calculated: Quantity x Unit Price'}
+                                                    />
+                                                    {selectedProduct.amountEdited && (
+                                                      <div className="text-warning" style={{ fontSize: '10px', marginTop: '2px' }}>
+                                                        <i className="fas fa-edit"></i> Modified
+                                                      </div>
+                                                    )}
                                                   </div>
                                                   <div className="col-2 d-flex justify-content-end">
                                                     <button
@@ -1236,11 +1311,14 @@ const Packs = () => {
                                 const spId = typeof sp.productId === 'string' ? parseInt(sp.productId) : sp.productId;
                                 return pId === spId;
                               });
+                              // Use edited amount if available, otherwise calculate from quantity * unitPrice
+                              const displayAmount = sp.amountEdited && sp.amount !== undefined ? sp.amount : (sp.quantity * sp.unitPrice);
                               return (
                                 <div key={sp.productId} className="d-flex justify-content-between align-items-center mb-1">
                                   <span>{product?.name}</span>
-                                  <small className="text-muted">
-                                    {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{(sp.quantity * sp.unitPrice).toFixed(2)}
+                                  <small className={`text-muted ${sp.amountEdited ? 'text-warning' : ''}`}>
+                                    {sp.quantity} × ₹{sp.unitPrice} {sp.unitTypeId ? `(${unitTypes.find(u => u.id === sp.unitTypeId)?.abbreviation || ''})` : ''} = ₹{displayAmount.toFixed(2)}
+                                    {sp.amountEdited && <span className="ml-1" title="Amount manually modified">✎</span>}
                                     {sp.notes && <span className="text-info ml-1" title={sp.notes}>*</span>}
                                   </small>
                                 </div>
@@ -1248,7 +1326,11 @@ const Packs = () => {
                             })}
                             <div className="d-flex justify-content-between align-items-center font-weight-bold border-top pt-2">
                               <span>Total Value (Base Price):</span>
-                              <span className="text-success">₹{selectedProducts.reduce((total, sp) => total + (sp.quantity * sp.unitPrice), 0).toFixed(2)}</span>
+                              <span className="text-success">₹{selectedProducts.reduce((total, sp) => {
+                                // Use edited amount if available, otherwise calculate from quantity * unitPrice
+                                const itemAmount = sp.amountEdited && sp.amount !== undefined ? sp.amount : (sp.quantity * sp.unitPrice);
+                                return total + itemAmount;
+                              }, 0).toFixed(2)}</span>
                             </div>
                             {formData.finalPrice && parseFloat(formData.finalPrice) < parseFloat(formData.basePrice) && (
                               <div className="text-warning small mt-1">
