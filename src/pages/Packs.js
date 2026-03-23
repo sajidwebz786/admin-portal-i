@@ -1179,10 +1179,10 @@ const Packs = () => {
                                                 {/* Field Labels Row */}
                                                 <div className="row mb-2">
                                                   <div className="col-md-2">
-                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Quantity</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Type</span>
                                                   </div>
                                                   <div className="col-md-2">
-                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Type</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Quantity</span>
                                                   </div>
                                                   <div className="col-md-3">
                                                     <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Price (₹)</span>
