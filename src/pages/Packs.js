@@ -1179,19 +1179,19 @@ const Packs = () => {
                                                 {/* Field Labels Row */}
                                                 <div className="row mb-2">
                                                   <div className="col-md-2">
-                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Quantity</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Quantity</span>
                                                   </div>
                                                   <div className="col-md-2">
-                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Unit Type</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Type</span>
                                                   </div>
                                                   <div className="col-md-3">
-                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Unit Price (₹)</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Price (₹)</span>
                                                   </div>
                                                   <div className="col-md-3">
-                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Total Amount (₹)</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Total Amount (₹)</span>
                                                   </div>
                                                   <div className="col-md-2">
-                                                    <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#343a40', letterSpacing: '0.5px' }}>Action</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Action</span>
                                                   </div>
                                                 </div>
                                                 {/* Input Fields Row */}
@@ -1270,32 +1270,43 @@ const Packs = () => {
                                                 </div>
                                                 {/* Notes field for price variation and Remove button */}
                                                 <div className="row mt-3 pt-2" style={{ borderTop: '1px solid #e3e6f0' }}>
-                                                  <div className="col-md-10">
+                                                  <div className="col-md-10 pr-0">
                                                     <label className="small text-muted font-weight-bold mb-1">Notes (optional)</label>
                                                     <input
                                                       type="text"
                                                       className="form-control form-control-sm"
+                                                      style={{ height: '38px', borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
                                                       placeholder="e.g., small PC, medium PC, large PC - reason for price variation"
                                                       value={selectedProduct.notes || ''}
                                                       onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
                                                     />
                                                   </div>
-                                                  <div className="col-md-2 d-flex align-items-end justify-content-center">
+                                                  <div className="col-md-2 pl-0 d-flex align-items-end justify-content-center">
                                                     <button
                                                       type="button"
                                                       onClick={() => removeProductFromPack(product.id)}
                                                       title="Remove this product"
-                                                      className="btn btn-sm btn-danger"
-                                                      style={{ 
-                                                        padding: '4px 8px',
-                                                        fontSize: '14px',
-                                                        transition: 'transform 0.2s',
-                                                        marginBottom: '4px'
+                                                      className="btn btn-sm"
+                                                      style={{
+                                                        background: '#fff',
+                                                        border: '1px solid #dc3545',
+                                                        color: '#dc3545',
+                                                        height: '38px',
+                                                        width: '38px',
+                                                        borderTopLeftRadius: 0,
+                                                        borderBottomLeftRadius: 0,
+                                                        fontWeight: 700,
+                                                        fontSize: '1.25rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        transition: 'background 0.2s, color 0.2s',
+                                                        marginBottom: '0'
                                                       }}
-                                                      onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                                                      onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                                      onMouseEnter={e => { e.target.style.background = '#dc3545'; e.target.style.color = '#fff'; }}
+                                                      onMouseLeave={e => { e.target.style.background = '#fff'; e.target.style.color = '#dc3545'; }}
                                                     >
-                                                      Remove
+                                                      ×
                                                     </button>
                                                   </div>
                                                 </div>
