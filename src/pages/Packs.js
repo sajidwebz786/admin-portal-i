@@ -920,7 +920,7 @@ const Packs = () => {
         {/* Add/Edit Modal */}
         {showModal && (
           <div className="modal fade show" style={{ display: 'block' }}>
-            <div className="modal-dialog modal-lg" style={{ marginTop: '5vh' }}>
+            <div className="modal-dialog modal-xl" style={{ marginTop: '5vh', maxWidth: '1200px' }}>
               <div className="modal-content" style={{ border: 'none', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)', overflow: 'hidden' }}>
                 <div className="modal-header" style={{ padding: '15px 50px 15px 20px', position: 'relative', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
                   <h4 className="modal-title" style={{ fontWeight: '600', margin: 0 }}>
@@ -1177,7 +1177,7 @@ const Packs = () => {
                                             {isSelected && (
                                               <div className="mt-3">
                                                 <div className="row">
-                                                  <div className="col-2">
+                                                  <div className="col-1">
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.useCustomQuantity ? 'custom' : (selectedProduct.quantity || 1).toString()}
@@ -1201,7 +1201,7 @@ const Packs = () => {
                                                       />
                                                     )}
                                                   </div>
-                                                  <div className="col-2">
+                                                  <div className="col-1">
                                                     <select
                                                       className="form-control"
                                                       value={selectedProduct.unitTypeId || product.unitTypeId || ''}
@@ -1215,7 +1215,7 @@ const Packs = () => {
                                                       ))}
                                                     </select>
                                                   </div>
-                                                  <div className="col-3">
+                                                  <div className="col-4">
                                                     <input
                                                       type="number"
                                                       step="0.01"
@@ -1227,7 +1227,7 @@ const Packs = () => {
                                                       }}
                                                     />
                                                   </div>
-                                                  <div className="col-3">
+                                                  <div className="col-4">
                                                     <input
                                                       type="number"
                                                       step="0.01"
