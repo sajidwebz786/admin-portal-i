@@ -1187,11 +1187,8 @@ const Packs = () => {
                                                   <div className="col-md-3">
                                                     <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Unit Price (₹)</span>
                                                   </div>
-                                                  <div className="col-md-3">
+                                                  <div className="col-md-5">
                                                     <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Total Amount (₹)</span>
-                                                  </div>
-                                                  <div className="col-md-2">
-                                                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#222', letterSpacing: '0.2px' }}>Action</span>
                                                   </div>
                                                 </div>
                                                 {/* Input Fields Row */}
@@ -1249,7 +1246,7 @@ const Packs = () => {
                                                       title="Price per unit"
                                                     />
                                                   </div>
-                                                  <div className="col-md-3">
+                                                  <div className="col-md-4">
                                                     <input
                                                       type="number"
                                                       step="0.01"
@@ -1267,21 +1264,7 @@ const Packs = () => {
                                                       </div>
                                                     )}
                                                   </div>
-                                                </div>
-                                                {/* Notes field for price variation and Remove button */}
-                                                <div className="row mt-3 pt-2" style={{ borderTop: '1px solid #e3e6f0' }}>
-                                                  <div className="col-md-10 pr-0">
-                                                    <label className="small text-muted font-weight-bold mb-1">Notes (optional)</label>
-                                                    <input
-                                                      type="text"
-                                                      className="form-control form-control-sm"
-                                                      style={{ height: '38px', borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
-                                                      placeholder="e.g., small PC, medium PC, large PC - reason for price variation"
-                                                      value={selectedProduct.notes || ''}
-                                                      onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
-                                                    />
-                                                  </div>
-                                                  <div className="col-md-2 pl-0 d-flex align-items-end justify-content-center">
+                                                  <div className="col-md-1 d-flex align-items-end justify-content-center pl-0">
                                                     <button
                                                       type="button"
                                                       onClick={() => removeProductFromPack(product.id)}
@@ -1293,8 +1276,6 @@ const Packs = () => {
                                                         color: '#dc3545',
                                                         height: '38px',
                                                         width: '38px',
-                                                        borderTopLeftRadius: 0,
-                                                        borderBottomLeftRadius: 0,
                                                         fontWeight: 700,
                                                         fontSize: '1.25rem',
                                                         display: 'flex',
@@ -1308,6 +1289,20 @@ const Packs = () => {
                                                     >
                                                       ×
                                                     </button>
+                                                  </div>
+                                                </div>
+                                                {/* Notes field for price variation and Remove button */}
+                                                <div className="row mt-3 pt-2" style={{ borderTop: '1px solid #e3e6f0' }}>
+                                                  <div className="col-12 pr-0">
+                                                    <label className="small text-muted font-weight-bold mb-1">Notes (optional)</label>
+                                                    <input
+                                                      type="text"
+                                                      className="form-control form-control-sm"
+                                                      style={{ height: '38px' }}
+                                                      placeholder="e.g., small PC, medium PC, large PC - reason for price variation"
+                                                      value={selectedProduct.notes || ''}
+                                                      onChange={(e) => handleProductNotesChange(product.id, e.target.value)}
+                                                    />
                                                   </div>
                                                 </div>
                                               </div>
