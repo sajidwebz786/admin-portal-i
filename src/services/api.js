@@ -83,6 +83,9 @@ export const categoryService = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   delete: (id) => api.delete(`/categories/${id}`),
+  toggleStatus: (id) => api.patch(`/categories/${id}/toggle-status`),
+  activate: (id) => api.patch(`/categories/${id}/activate`),
+  deactivate: (id) => api.patch(`/categories/${id}/deactivate`),
 };
 
 // Product services
@@ -99,6 +102,9 @@ export const productService = {
   delete: (id) => api.delete(`/products/${id}`),
   updateStock: (id, stock) => api.patch(`/products/${id}/stock`, { stock }),
   updatePrice: (id, price) => api.patch(`/products/${id}/price`, { price }),
+  toggleStatus: (id) => api.patch(`/products/${id}/toggle-status`),
+  activate: (id) => api.patch(`/products/${id}/activate`),
+  deactivate: (id) => api.patch(`/products/${id}/deactivate`),
 };
 
 // User services
@@ -128,6 +134,9 @@ export const unitTypeService = {
   create: (data) => api.post('/unit-types', data),
   update: (id, data) => api.put(`/unit-types/${id}`, data),
   delete: (id) => api.delete(`/unit-types/${id}`),
+  toggleStatus: (id) => api.patch(`/unit-types/${id}/toggle-status`),
+  activate: (id) => api.patch(`/unit-types/${id}/activate`),
+  deactivate: (id) => api.patch(`/unit-types/${id}/deactivate`),
 };
 
 // Pack Type services
@@ -140,6 +149,9 @@ export const packTypeService = {
   create: (data) => api.post('/pack-types', data),
   update: (id, data) => api.put(`/pack-types/${id}`, data),
   delete: (id) => api.delete(`/pack-types/${id}`),
+  toggleStatus: (id) => api.patch(`/pack-types/${id}/toggle-status`),
+  activate: (id) => api.patch(`/pack-types/${id}/activate`),
+  deactivate: (id) => api.patch(`/pack-types/${id}/deactivate`),
 };
 
 // Pack services

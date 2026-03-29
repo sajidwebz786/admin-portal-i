@@ -76,6 +76,21 @@ const UnitTypes = () => {
     }
   };
 
+  const handleToggleStatus = async (unitType) => {
+    try {
+      const newStatus = !unitType.isActive;
+      const action = newStatus ? 'activate' : 'deactivate';
+      if (!window.confirm(`Are you sure you want to ${action} this unit type?`)) {
+        return;
+      }
+      await unitTypeService.toggleStatus(unitType.id);
+      fetchUnitTypes();
+    } catch (error) {
+      setError('Failed to update unit type status');
+      console.error('Toggle status error:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -204,6 +219,13 @@ const UnitTypes = () => {
                                 title="Edit"
                               >
                                 <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className={`btn btn-sm ${unitType.isActive ? 'btn-warning' : 'btn-success'}`}
+                                onClick={() => handleToggleStatus(unitType)}
+                                title={unitType.isActive ? 'Deactivate' : 'Activate'}
+                              >
+                                <i className={`fas ${unitType.isActive ? 'fa-ban' : 'fa-check'}`}></i>
                               </button>
                               <button
                                 className="btn btn-sm btn-danger"

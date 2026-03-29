@@ -162,6 +162,21 @@ const Products = () => {
     }
   };
 
+  const handleToggleStatus = async (product) => {
+    try {
+      const newStatus = product.isActive === false;
+      const action = newStatus ? 'activate' : 'deactivate';
+      if (!window.confirm(`Are you sure you want to ${action} this product?`)) {
+        return;
+      }
+      await productService.toggleStatus(product.id);
+      fetchData();
+    } catch (error) {
+      setError('Failed to update product status');
+      console.error('Toggle status error:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -284,8 +299,8 @@ const Products = () => {
                     <td>{product.stock}</td>
 
                     <td>
-                      <span className={`badge ${product.isAvailable ? 'badge-success' : 'badge-danger'}`}>
-                        {product.isAvailable ? 'Available' : 'Unavailable'}
+                      <span className={`badge ${product.isActive === false ? 'badge-danger' : 'badge-success'}`}>
+                        {product.isActive === false ? 'Inactive' : 'Active'}
                       </span>
                     </td>
 
@@ -307,6 +322,13 @@ const Products = () => {
                           title="Edit"
                         >
                           <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className={`btn btn-sm ${product.isActive === false ? 'btn-success' : 'btn-warning'}`}
+                          onClick={() => handleToggleStatus(product)}
+                          title={product.isActive === false ? 'Activate' : 'Deactivate'}
+                        >
+                          <i className={`fas ${product.isActive === false ? 'fa-check' : 'fa-ban'}`}></i>
                         </button>
                         <button 
                           className="btn btn-sm btn-danger" 

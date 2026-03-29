@@ -83,6 +83,21 @@ const PackTypes = () => {
     }
   };
 
+  const handleToggleStatus = async (packType) => {
+    try {
+      const newStatus = !packType.isActive;
+      const action = newStatus ? 'activate' : 'deactivate';
+      if (!window.confirm(`Are you sure you want to ${action} this pack type?`)) {
+        return;
+      }
+      await packTypeService.toggleStatus(packType.id);
+      fetchPackTypes();
+    } catch (error) {
+      setError('Failed to update pack type status');
+      console.error('Toggle status error:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -242,6 +257,13 @@ const PackTypes = () => {
                                 title="Edit"
                               >
                                 <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className={`btn btn-sm ${packType.isActive ? 'btn-warning' : 'btn-success'}`}
+                                onClick={() => handleToggleStatus(packType)}
+                                title={packType.isActive ? 'Deactivate' : 'Activate'}
+                              >
+                                <i className={`fas ${packType.isActive ? 'fa-ban' : 'fa-check'}`}></i>
                               </button>
                               <button
                                 className="btn btn-sm btn-danger"

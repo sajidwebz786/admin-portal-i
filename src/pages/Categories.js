@@ -118,6 +118,21 @@ const Categories = () => {
     }
   };
 
+  const handleToggleStatus = async (category) => {
+    try {
+      const newStatus = !category.isActive;
+      const action = newStatus ? 'activate' : 'deactivate';
+      if (!window.confirm(`Are you sure you want to ${action} this category?`)) {
+        return;
+      }
+      await categoryService.toggleStatus(category.id);
+      fetchCategories();
+    } catch (error) {
+      setError('Failed to update category status');
+      console.error('Toggle status error:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -321,6 +336,13 @@ const Categories = () => {
                                 title="Edit"
                               >
                                 <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className={`btn btn-sm ${category.isActive ? 'btn-warning' : 'btn-success'}`}
+                                onClick={() => handleToggleStatus(category)}
+                                title={category.isActive ? 'Deactivate' : 'Activate'}
+                              >
+                                <i className={`fas ${category.isActive ? 'fa-ban' : 'fa-check'}`}></i>
                               </button>
                               <button
                                 className="btn btn-sm btn-danger"
