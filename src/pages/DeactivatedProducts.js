@@ -204,7 +204,7 @@ const DeactivatedProducts = () => {
                           )}
                         </td>
                         <td>{product.categoryName || product.category?.name || 'N/A'}</td>
-                        <td className="font-weight-bold">₹{product.price?.toFixed(2) || '0.00'}</td>
+                        <td className="font-weight-bold">₹{Number(product.price || 0).toFixed(2)}</td>
                         <td>
                           <span className={`badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}`}>
                             {product.stock || 0}
