@@ -128,7 +128,7 @@ const Products = () => {
       // Admin can delete directly - soft delete to deactivated
       if (window.confirm('Are you sure you want to delete this product? It will be moved to Deactivated Products.')) {
         try {
-          await productService.update(id, { isActive: false, deactivatedAt: new Date().toISOString(), deactivationReason: 'Deleted by admin' });
+          await productService.update(id, { isAvailable: false });
           fetchData();
         } catch (error) {
           console.error('Delete error:', error);
@@ -164,7 +164,7 @@ const Products = () => {
 
   const handleToggleStatus = async (product) => {
     try {
-      const newStatus = product.isActive === false;
+      const newStatus = product.isAvailable === false;
       const action = newStatus ? 'activate' : 'deactivate';
       if (!window.confirm(`Are you sure you want to ${action} this product?`)) {
         return;
@@ -299,8 +299,8 @@ const Products = () => {
                     <td>{product.stock}</td>
 
                     <td>
-                      <span className={`badge ${product.isActive === false ? 'badge-danger' : 'badge-success'}`}>
-                        {product.isActive === false ? 'Inactive' : 'Active'}
+                      <span className={`badge ${product.isAvailable === false ? 'badge-danger' : 'badge-success'}`}>
+                        {product.isAvailable === false ? 'Inactive' : 'Active'}
                       </span>
                     </td>
 
@@ -324,11 +324,11 @@ const Products = () => {
                           <i className="fas fa-edit"></i>
                         </button>
                         <button
-                          className={`btn btn-sm ${product.isActive === false ? 'btn-success' : 'btn-warning'}`}
+                          className={`btn btn-sm ${product.isAvailable === false ? 'btn-success' : 'btn-warning'}`}
                           onClick={() => handleToggleStatus(product)}
-                          title={product.isActive === false ? 'Activate' : 'Deactivate'}
+                          title={product.isAvailable === false ? 'Activate' : 'Deactivate'}
                         >
-                          <i className={`fas ${product.isActive === false ? 'fa-check' : 'fa-ban'}`}></i>
+                          <i className={`fas ${product.isAvailable === false ? 'fa-check' : 'fa-ban'}`}></i>
                         </button>
                         <button 
                           className="btn btn-sm btn-danger" 

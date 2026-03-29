@@ -18,7 +18,7 @@ const DeactivatedProducts = () => {
       const allProducts = response.data || [];
       
       // Filter for deactivated/inactive products
-      const deactivated = allProducts.filter(p => p.isActive === false);
+      const deactivated = allProducts.filter(p => p.isAvailable === false);
       setProducts(deactivated);
       setLoading(false);
     } catch (error) {
@@ -34,7 +34,7 @@ const DeactivatedProducts = () => {
     }
 
     try {
-      await productService.update(productId, { isActive: true });
+      await productService.update(productId, { isAvailable: true });
       setMessage({ type: 'success', text: 'Product reactivated successfully!' });
       // Remove from list
       setProducts(products.filter(p => p.id !== productId));
