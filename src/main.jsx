@@ -184,7 +184,7 @@ function useAdminData(enabled, refresh) {
 }
 
 function LoginScreen({ onSession }) {
-  const [form, setForm] = useState({ identifier: 'admin@illuminate.local', password: 'Admin@12345' });
+  const [form, setForm] = useState({ identifier: 'admin@illuminate.com', password: 'Admin@12345' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
