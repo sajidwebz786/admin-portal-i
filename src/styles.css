@@ -317,6 +317,28 @@ p {
   font-size: 2.5rem;
 }
 
+.hierarchy-summary {
+  display: grid;
+  gap: 9px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.hierarchy-summary svg {
+  color: var(--green);
+}
+
+.hierarchy-summary h3,
+.hierarchy-summary p {
+  margin: 0;
+}
+
+.hierarchy-summary p {
+  color: var(--muted);
+}
+
 .table-wrap {
   width: 100%;
   overflow: auto;

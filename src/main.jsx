@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Ticket,
+  TreePine,
   UploadCloud,
   Users,
   Wallet,
@@ -90,6 +91,7 @@ function App() {
   const nav = [
     ['dashboard', 'Dashboard', LayoutDashboard],
     ['users', 'Users', Users],
+    ['hierarchy', 'Hierarchy', TreePine],
     ['packages', 'Packages', Boxes],
     ['payments', 'Payments', CreditCard],
     ['tasks', 'Tasks', ClipboardCheck],
@@ -132,6 +134,7 @@ function App() {
 
         {active === 'dashboard' && <Dashboard data={data} />}
         {active === 'users' && <UsersPage users={data.users} onRefresh={() => setRefresh((x) => x + 1)} />}
+        {active === 'hierarchy' && <HierarchyPage users={data.users} />}
         {active === 'packages' && <PackagesPage packages={data.packages} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'payments' && <PaymentsPage payments={data.payments} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'tasks' && <TasksPage submissions={data.submissions} packages={data.packages} onRefresh={() => setRefresh((x) => x + 1)} />}
@@ -287,6 +290,66 @@ function UsersPage({ users, onRefresh }) {
         empty="No users yet."
       />
     </Panel>
+  );
+}
+
+function HierarchyPage({ users }) {
+  const [selectedUserId, setSelectedUserId] = useState(users[0]?.id || '');
+  const [tree, setTree] = useState(null);
+  const [downline, setDownline] = useState([]);
+
+  useEffect(() => {
+    if (!selectedUserId && users[0]?.id) setSelectedUserId(users[0].id);
+  }, [users, selectedUserId]);
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+    let mounted = true;
+    Promise.allSettled([
+      api.get(`/referrals/admin/${selectedUserId}/tree`),
+      api.get(`/referrals/admin/${selectedUserId}/downline`)
+    ]).then((results) => {
+      if (!mounted) return;
+      setTree(results[0].value?.data?.tree || null);
+      setDownline(results[1].value?.data?.referrals || []);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedUserId]);
+
+  const selectedUser = users.find((user) => user.id === selectedUserId);
+
+  return (
+    <div className="two-col">
+      <Panel title="Profile Hierarchy" icon={TreePine}>
+        <div className="stack">
+          <select value={selectedUserId} onChange={(event) => setSelectedUserId(event.target.value)}>
+            <option value="">Select profile</option>
+            {users.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.referralCode}</option>)}
+          </select>
+          <div className="hierarchy-summary">
+            <TreePine size={28} />
+            <h3>{selectedUser?.name || tree?.name || 'Select a profile'}</h3>
+            <p>Invite code: <strong>{selectedUser?.referralCode || tree?.referralCode || '-'}</strong></p>
+            <p>Direct referrals: <strong>{downline.filter((item) => item.level === 1).length}</strong></p>
+            <p>Total hierarchy count: <strong>{downline.length}</strong></p>
+          </div>
+        </div>
+      </Panel>
+      <Panel title="Hierarchy Order" icon={Users}>
+        <DataTable
+          columns={['Level', 'Name', 'Code', 'Status']}
+          rows={downline.map((item) => [
+            `Level ${item.level}`,
+            item.child?.name || 'Member',
+            item.child?.referralCode || '-',
+            <Badge tone={item.child?.status === 'active' ? 'green' : 'gold'}>{item.child?.status || '-'}</Badge>
+          ])}
+          empty="No hierarchy records for this profile yet."
+        />
+      </Panel>
+    </div>
   );
 }
 
