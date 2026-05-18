@@ -30,7 +30,7 @@ import './styles.css';
 import logo from './assets/images/logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const BRAND_NAME = 'Luminateads';
+const BRAND_NAME = 'Luminate Ads';
 const api = axios.create({ baseURL: API_URL });
 
 api.interceptors.request.use((config) => {
@@ -107,7 +107,7 @@ function App() {
     <div className="admin-shell">
       <aside className={sidebarOpen ? 'sidebar open' : 'sidebar'}>
         <div className="brand">
-          <img className="brand-logo" src={logo} alt="Luminateads" />
+          <img className="brand-logo" src={logo} alt="Luminate Ads" />
         </div>
         <nav>
           {nav.map(([key, label, Icon]) => (
@@ -122,7 +122,7 @@ function App() {
         <header className="admin-topbar">
           <button className="icon-btn mobile-menu" onClick={() => setSidebarOpen(!sidebarOpen)} title="Menu"><Menu size={20} /></button>
           <div>
-            <span className="kicker">Luminateads Admin Portal</span>
+            <span className="kicker">Luminate Ads Admin Portal</span>
             <h1>{nav.find(([key]) => key === active)?.[1]}</h1>
           </div>
           <div className="admin-actions">
@@ -214,13 +214,13 @@ function LoginScreen({ onSession }) {
       <section className="login-visual">
         <div className="login-copy">
           <span className="kicker">Operations Control</span>
-          <h1>Luminateads Admin Portal</h1>
+          <h1>Luminate Ads Admin Portal</h1>
           <p>Approve payments, verify daily ad tasks, control packages, handle withdrawals, monitor hierarchy, and manage secure payout operations.</p>
         </div>
       </section>
       <section className="login-card">
         <div className="brand login-brand">
-          <img className="brand-logo" src={logo} alt="Luminateads" />
+          <img className="brand-logo" src={logo} alt="Luminate Ads" />
         </div>
         <h2>Admin Sign In</h2>
         <form onSubmit={submit}>
