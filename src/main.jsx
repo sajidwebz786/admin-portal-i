@@ -55,6 +55,7 @@ const demo = {
   users: [],
   packages: [],
   payments: [],
+  tasks: [],
   withdrawals: [],
   submissions: [],
   tickets: [],
@@ -137,11 +138,11 @@ function App() {
         {active === 'hierarchy' && <HierarchyPage users={data.users} />}
         {active === 'packages' && <PackagesPage packages={data.packages} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'payments' && <PaymentsPage payments={data.payments} onRefresh={() => setRefresh((x) => x + 1)} />}
-        {active === 'tasks' && <TasksPage submissions={data.submissions} packages={data.packages} onRefresh={() => setRefresh((x) => x + 1)} />}
+        {active === 'tasks' && <TasksPage tasks={data.tasks} submissions={data.submissions} packages={data.packages} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'withdrawals' && <WithdrawalsPage withdrawals={data.withdrawals} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'support' && <SupportPage tickets={data.tickets} />}
         {active === 'reports' && <ReportsPage reports={data.reports} />}
-        {active === 'content' && <ContentPage banners={data.banners} />}
+        {active === 'content' && <ContentPage banners={data.banners} onRefresh={() => setRefresh((x) => x + 1)} />}
         {active === 'notifications' && <NotificationsPage />}
       </main>
     </div>
@@ -158,6 +159,7 @@ function useAdminData(enabled, refresh) {
       api.get('/admin/dashboard'),
       api.get('/admin/users'),
       api.get('/packages'),
+      api.get('/tasks'),
       api.get('/payments/admin'),
       api.get('/withdrawals/admin'),
       api.get('/tasks/admin/submissions'),
@@ -170,12 +172,13 @@ function useAdminData(enabled, refresh) {
         totals: results[0].value?.data?.totals || demo.totals,
         users: results[1].value?.data?.users || [],
         packages: results[2].value?.data?.packages || [],
-        payments: results[3].value?.data?.payments || [],
-        withdrawals: results[4].value?.data?.withdrawals || [],
-        submissions: results[5].value?.data?.submissions || [],
-        tickets: results[6].value?.data?.tickets || [],
-        reports: results[7].value?.data || demo.reports,
-        banners: results[8].value?.data?.banners || []
+        tasks: results[3].value?.data?.tasks || [],
+        payments: results[4].value?.data?.payments || [],
+        withdrawals: results[5].value?.data?.withdrawals || [],
+        submissions: results[6].value?.data?.submissions || [],
+        tickets: results[7].value?.data?.tickets || [],
+        reports: results[8].value?.data || demo.reports,
+        banners: results[9].value?.data?.banners || []
       });
     });
     return () => {
@@ -271,6 +274,21 @@ function Dashboard({ data }) {
 }
 
 function UsersPage({ users, onRefresh }) {
+  async function editUser(user) {
+    const name = window.prompt('Edit member name', user.name);
+    if (!name) return;
+    const mobile = window.prompt('Edit mobile number', user.mobile || '') || user.mobile;
+    await api.put(`/admin/users/${user.id}`, { name, mobile });
+    onRefresh();
+  }
+
+  async function resetPassword(user) {
+    const password = window.prompt(`New password for ${user.name}`);
+    if (!password) return;
+    await api.put(`/admin/users/${user.id}/reset-password`, { password });
+    onRefresh();
+  }
+
   return (
     <Panel title="Member Management" icon={Users} action={<SearchBox />}>
       <DataTable
@@ -282,9 +300,11 @@ function UsersPage({ users, onRefresh }) {
           user.sponsor?.name || 'Direct',
           <Badge tone={user.status === 'active' ? 'green' : 'gold'}>{user.status}</Badge>,
           <div className="row-actions">
+            <button className="mini" onClick={() => editUser(user)}>Edit</button>
             <button className="mini" onClick={async () => { await api.put(`/admin/users/${user.id}`, { status: user.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Toggle</button>
             <button className="mini" onClick={async () => { await api.put(`/admin/users/${user.id}`, { status: 'active', isMobileVerified: true, isEmailVerified: true }); onRefresh(); }}>Permission</button>
-            <button className="mini reject" onClick={async () => { await api.delete(`/admin/users/${user.id}`); onRefresh(); }}>Delete</button>
+            <button className="mini" onClick={() => resetPassword(user)}>Password</button>
+            <button className="mini reject" onClick={async () => { if (window.confirm(`Delete ${user.name}?`)) { await api.delete(`/admin/users/${user.id}`); onRefresh(); } }}>Delete</button>
           </div>
         ])}
         empty="No users yet."
@@ -354,36 +374,69 @@ function HierarchyPage({ users }) {
 }
 
 function PackagesPage({ packages, onRefresh }) {
-  const [form, setForm] = useState({ name: '', baseAmount: '', taxAmount: '', finalAmount: '' });
+  const emptyForm = { name: '', baseAmount: '', taxAmount: '', finalAmount: '', status: 'active' };
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState('');
 
   async function createPackage(event) {
     event.preventDefault();
-    await api.post('/packages', {
+    const payload = {
       name: form.name,
       baseAmount: Number(form.baseAmount),
       taxAmount: Number(form.taxAmount || 0),
-      finalAmount: Number(form.finalAmount)
-    });
-    setForm({ name: '', baseAmount: '', taxAmount: '', finalAmount: '' });
+      finalAmount: Number(form.finalAmount),
+      status: form.status
+    };
+    if (editingId) {
+      await api.put(`/packages/${editingId}`, payload);
+    } else {
+      await api.post('/packages', payload);
+    }
+    setForm(emptyForm);
+    setEditingId('');
     onRefresh();
+  }
+
+  function editPackage(pkg) {
+    setEditingId(pkg.id);
+    setForm({
+      name: pkg.name || '',
+      baseAmount: pkg.baseAmount || '',
+      taxAmount: pkg.taxAmount || '',
+      finalAmount: pkg.finalAmount || '',
+      status: pkg.status || 'active'
+    });
   }
 
   return (
     <div className="two-col">
       <Panel title="Packages" icon={Boxes}>
         <DataTable
-          columns={['Name', 'Base', 'Tax', 'Final', 'Status']}
-          rows={packages.map((pkg) => [pkg.name, money(pkg.baseAmount), money(pkg.taxAmount), money(pkg.finalAmount), <Badge tone="green">{pkg.status}</Badge>])}
+          columns={['Name', 'Base', 'Tax', 'Final', 'Status', 'Action']}
+          rows={packages.map((pkg) => [
+            pkg.name,
+            money(pkg.baseAmount),
+            money(pkg.taxAmount),
+            money(pkg.finalAmount),
+            <Badge tone={pkg.status === 'active' ? 'green' : 'gold'}>{pkg.status}</Badge>,
+            <div className="row-actions">
+              <button className="mini" onClick={() => editPackage(pkg)}>Edit</button>
+              <button className="mini" onClick={async () => { await api.patch(`/packages/${pkg.id}/status`, { status: pkg.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Status</button>
+              <button className="mini reject" onClick={async () => { if (window.confirm(`Delete ${pkg.name}?`)) { await api.delete(`/packages/${pkg.id}`); onRefresh(); } }}>Delete</button>
+            </div>
+          ])}
           empty="No packages available."
         />
       </Panel>
-      <Panel title="Create Package" icon={PackagePlus}>
+      <Panel title={editingId ? 'Edit Package' : 'Create Package'} icon={PackagePlus}>
         <form className="stack" onSubmit={createPackage}>
           <input required placeholder="Package name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input required type="number" placeholder="Base amount" value={form.baseAmount} onChange={(e) => setForm({ ...form, baseAmount: e.target.value })} />
           <input type="number" placeholder="Tax amount" value={form.taxAmount} onChange={(e) => setForm({ ...form, taxAmount: e.target.value })} />
           <input required type="number" placeholder="Final amount" value={form.finalAmount} onChange={(e) => setForm({ ...form, finalAmount: e.target.value })} />
-          <button className="primary">Save Package</button>
+          <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          <button className="primary">{editingId ? 'Update Package' : 'Save Package'}</button>
+          {editingId && <button type="button" className="ghost" onClick={() => { setEditingId(''); setForm(emptyForm); }}>Cancel Edit</button>}
         </form>
       </Panel>
     </div>
@@ -415,18 +468,39 @@ function PaymentsPage({ payments, onRefresh }) {
   );
 }
 
-function TasksPage({ submissions, packages, onRefresh }) {
-  const [task, setTask] = useState({ title: '', platform: 'youtube', taskUrl: '', description: '', rewardAmount: '', packageId: '' });
+function TasksPage({ tasks, submissions, packages, onRefresh }) {
+  const emptyTask = { title: '', platform: 'youtube', taskUrl: '', description: '', rewardAmount: '', packageId: '', status: 'active' };
+  const [task, setTask] = useState(emptyTask);
+  const [editingTaskId, setEditingTaskId] = useState('');
 
   async function createTask(event) {
     event.preventDefault();
-    await api.post('/tasks', {
+    const payload = {
       ...task,
       rewardAmount: Number(task.rewardAmount || 0),
       packageId: task.packageId || null
-    });
-    setTask({ title: '', platform: 'youtube', taskUrl: '', description: '', rewardAmount: '', packageId: '' });
+    };
+    if (editingTaskId) {
+      await api.put(`/tasks/${editingTaskId}`, payload);
+    } else {
+      await api.post('/tasks', payload);
+    }
+    setTask(emptyTask);
+    setEditingTaskId('');
     onRefresh();
+  }
+
+  function editTask(item) {
+    setEditingTaskId(item.id);
+    setTask({
+      title: item.title || '',
+      platform: item.platform || 'youtube',
+      taskUrl: item.taskUrl || '',
+      description: item.description || '',
+      rewardAmount: item.rewardAmount || '',
+      packageId: item.packageId || '',
+      status: item.status || 'active'
+    });
   }
 
   async function decide(id, action) {
@@ -436,6 +510,23 @@ function TasksPage({ submissions, packages, onRefresh }) {
 
   return (
     <div className="two-col">
+      <Panel title="Task Library" icon={ClipboardCheck}>
+        <DataTable
+          columns={['Title', 'Platform', 'Reward', 'Status', 'Action']}
+          rows={tasks.map((item) => [
+            item.title,
+            item.platform,
+            money(item.rewardAmount),
+            <Badge tone={item.status === 'active' ? 'green' : 'gold'}>{item.status}</Badge>,
+            <div className="row-actions">
+              <button className="mini" onClick={() => editTask(item)}>Edit</button>
+              <button className="mini" onClick={async () => { await api.put(`/tasks/${item.id}`, { status: item.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Status</button>
+              <button className="mini reject" onClick={async () => { if (window.confirm(`Delete ${item.title}?`)) { await api.delete(`/tasks/${item.id}`); onRefresh(); } }}>Delete</button>
+            </div>
+          ])}
+          empty="No tasks created yet."
+        />
+      </Panel>
       <Panel title="Task Screenshot Verification" icon={ClipboardCheck}>
         <DataTable
           columns={['User', 'Task', 'Platform', 'Reward', 'Status', 'Action']}
@@ -450,7 +541,7 @@ function TasksPage({ submissions, packages, onRefresh }) {
           empty="No task submissions yet."
         />
       </Panel>
-      <Panel title="Create Promotion Task" icon={ClipboardCheck}>
+      <Panel title={editingTaskId ? 'Edit Promotion Task' : 'Create Promotion Task'} icon={ClipboardCheck}>
         <form className="stack" onSubmit={createTask}>
           <input required placeholder="Task title" value={task.title} onChange={(e) => setTask({ ...task, title: e.target.value })} />
           <select value={task.platform} onChange={(e) => setTask({ ...task, platform: e.target.value })}>
@@ -463,7 +554,9 @@ function TasksPage({ submissions, packages, onRefresh }) {
             <option value="">All packages</option>
             {packages.map((pkg) => <option key={pkg.id} value={pkg.id}>{pkg.name}</option>)}
           </select>
-          <button className="primary">Create Task</button>
+          <select value={task.status} onChange={(e) => setTask({ ...task, status: e.target.value })}><option value="active">Active</option><option value="inactive">Inactive</option><option value="expired">Expired</option></select>
+          <button className="primary">{editingTaskId ? 'Update Task' : 'Create Task'}</button>
+          {editingTaskId && <button type="button" className="ghost" onClick={() => { setEditingTaskId(''); setTask(emptyTask); }}>Cancel Edit</button>}
         </form>
       </Panel>
     </div>
@@ -527,31 +620,61 @@ function ReportsPage({ reports }) {
   );
 }
 
-function ContentPage({ banners }) {
-  const [banner, setBanner] = useState({ title: '', imageUrl: '', linkUrl: '', placement: 'home', status: 'active' });
+function ContentPage({ banners, onRefresh }) {
+  const emptyBanner = { title: '', imageUrl: '', linkUrl: '', placement: 'home', status: 'active' };
+  const [banner, setBanner] = useState(emptyBanner);
+  const [editingBannerId, setEditingBannerId] = useState('');
 
   async function createBanner(event) {
     event.preventDefault();
-    await api.post('/admin/banners', banner);
-    setBanner({ title: '', imageUrl: '', linkUrl: '', placement: 'home', status: 'active' });
+    if (editingBannerId) {
+      await api.put(`/admin/banners/${editingBannerId}`, banner);
+    } else {
+      await api.post('/admin/banners', banner);
+    }
+    setBanner(emptyBanner);
+    setEditingBannerId('');
+    onRefresh();
+  }
+
+  function editBanner(item) {
+    setEditingBannerId(item.id);
+    setBanner({
+      title: item.title || '',
+      imageUrl: item.imageUrl || '',
+      linkUrl: item.linkUrl || '',
+      placement: item.placement || 'home',
+      status: item.status || 'active'
+    });
   }
 
   return (
     <div className="two-col">
       <Panel title="Banners" icon={Image}>
         <DataTable
-          columns={['Title', 'Placement', 'Status']}
-          rows={banners.map((banner) => [banner.title, banner.placement, <Badge tone="green">{banner.status}</Badge>])}
+          columns={['Title', 'Placement', 'Status', 'Action']}
+          rows={banners.map((item) => [
+            item.title,
+            item.placement,
+            <Badge tone={item.status === 'active' ? 'green' : 'gold'}>{item.status}</Badge>,
+            <div className="row-actions">
+              <button className="mini" onClick={() => editBanner(item)}>Edit</button>
+              <button className="mini" onClick={async () => { await api.put(`/admin/banners/${item.id}`, { status: item.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Status</button>
+              <button className="mini reject" onClick={async () => { if (window.confirm(`Delete ${item.title}?`)) { await api.delete(`/admin/banners/${item.id}`); onRefresh(); } }}>Delete</button>
+            </div>
+          ])}
           empty="No banners yet."
         />
       </Panel>
-      <Panel title="Create Banner" icon={UploadCloud}>
+      <Panel title={editingBannerId ? 'Edit Banner' : 'Create Banner'} icon={UploadCloud}>
         <form className="stack" onSubmit={createBanner}>
           <input required placeholder="Banner title" value={banner.title} onChange={(e) => setBanner({ ...banner, title: e.target.value })} />
           <input required placeholder="Image URL" value={banner.imageUrl} onChange={(e) => setBanner({ ...banner, imageUrl: e.target.value })} />
           <input placeholder="Link URL" value={banner.linkUrl} onChange={(e) => setBanner({ ...banner, linkUrl: e.target.value })} />
           <select value={banner.placement} onChange={(e) => setBanner({ ...banner, placement: e.target.value })}><option value="home">Home</option><option value="dashboard">Dashboard</option><option value="promotion">Promotion</option><option value="mobile">Mobile</option></select>
-          <button className="primary">Save Banner</button>
+          <select value={banner.status} onChange={(e) => setBanner({ ...banner, status: e.target.value })}><option value="active">Active</option><option value="inactive">Inactive</option></select>
+          <button className="primary">{editingBannerId ? 'Update Banner' : 'Save Banner'}</button>
+          {editingBannerId && <button type="button" className="ghost" onClick={() => { setEditingBannerId(''); setBanner(emptyBanner); }}>Cancel Edit</button>}
         </form>
       </Panel>
     </div>
