@@ -19,7 +19,6 @@ import {
   Search,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   Ticket,
   UploadCloud,
   Users,
@@ -27,12 +26,14 @@ import {
   XCircle
 } from 'lucide-react';
 import './styles.css';
+import logo from './assets/images/logo.png';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BRAND_NAME = 'Luminateads';
 const api = axios.create({ baseURL: API_URL });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('illuminate_admin_token');
+  const token = localStorage.getItem('luminateads_admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -63,23 +64,23 @@ const demo = {
 function App() {
   const [active, setActive] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [admin, setAdmin] = useState(() => JSON.parse(localStorage.getItem('illuminate_admin_user') || 'null'));
-  const [token, setToken] = useState(localStorage.getItem('illuminate_admin_token'));
+  const [admin, setAdmin] = useState(() => JSON.parse(localStorage.getItem('luminateads_admin_user') || 'null'));
+  const [token, setToken] = useState(localStorage.getItem('luminateads_admin_token'));
   const [notice, setNotice] = useState('');
   const [refresh, setRefresh] = useState(0);
   const data = useAdminData(Boolean(token), refresh);
 
   function saveSession(payload) {
-    localStorage.setItem('illuminate_admin_token', payload.token);
-    localStorage.setItem('illuminate_admin_user', JSON.stringify(payload.user));
+    localStorage.setItem('luminateads_admin_token', payload.token);
+    localStorage.setItem('luminateads_admin_user', JSON.stringify(payload.user));
     setToken(payload.token);
     setAdmin(payload.user);
     setNotice('Admin session started.');
   }
 
   function logout() {
-    localStorage.removeItem('illuminate_admin_token');
-    localStorage.removeItem('illuminate_admin_user');
+    localStorage.removeItem('luminateads_admin_token');
+    localStorage.removeItem('luminateads_admin_user');
     setToken(null);
     setAdmin(null);
   }
@@ -103,8 +104,7 @@ function App() {
     <div className="admin-shell">
       <aside className={sidebarOpen ? 'sidebar open' : 'sidebar'}>
         <div className="brand">
-          <span><Sparkles size={20} /></span>
-          <strong>Illuminate</strong>
+          <img className="brand-logo" src={logo} alt="Luminateads" />
         </div>
         <nav>
           {nav.map(([key, label, Icon]) => (
@@ -119,7 +119,7 @@ function App() {
         <header className="admin-topbar">
           <button className="icon-btn mobile-menu" onClick={() => setSidebarOpen(!sidebarOpen)} title="Menu"><Menu size={20} /></button>
           <div>
-            <span className="kicker">Admin Portal</span>
+            <span className="kicker">Luminateads Admin Portal</span>
             <h1>{nav.find(([key]) => key === active)?.[1]}</h1>
           </div>
           <div className="admin-actions">
@@ -184,7 +184,7 @@ function useAdminData(enabled, refresh) {
 }
 
 function LoginScreen({ onSession }) {
-  const [form, setForm] = useState({ identifier: 'admin@illuminate.com', password: 'Admin@12345' });
+  const [form, setForm] = useState({ identifier: 'admin@luminateads.com', password: 'Admin@12345' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -208,14 +208,13 @@ function LoginScreen({ onSession }) {
       <section className="login-visual">
         <div className="login-copy">
           <span className="kicker">Operations Control</span>
-          <h1>Illuminate Admin Portal</h1>
-          <p>Approve payments, verify task screenshots, control packages and income levels, handle withdrawals, and keep the promotion network moving cleanly.</p>
+          <h1>Luminateads Admin Portal</h1>
+          <p>Approve payments, verify daily ad tasks, control packages, handle withdrawals, monitor hierarchy, and manage secure payout operations.</p>
         </div>
       </section>
       <section className="login-card">
         <div className="brand login-brand">
-          <span><Sparkles size={20} /></span>
-          <strong>Illuminate</strong>
+          <img className="brand-logo" src={logo} alt="Luminateads" />
         </div>
         <h2>Admin Sign In</h2>
         <form onSubmit={submit}>
@@ -279,7 +278,11 @@ function UsersPage({ users, onRefresh }) {
           user.package?.name || 'Not selected',
           user.sponsor?.name || 'Direct',
           <Badge tone={user.status === 'active' ? 'green' : 'gold'}>{user.status}</Badge>,
-          <button className="mini" onClick={async () => { await api.put(`/admin/users/${user.id}`, { status: user.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Toggle</button>
+          <div className="row-actions">
+            <button className="mini" onClick={async () => { await api.put(`/admin/users/${user.id}`, { status: user.status === 'active' ? 'inactive' : 'active' }); onRefresh(); }}>Toggle</button>
+            <button className="mini" onClick={async () => { await api.put(`/admin/users/${user.id}`, { status: 'active', isMobileVerified: true, isEmailVerified: true }); onRefresh(); }}>Permission</button>
+            <button className="mini reject" onClick={async () => { await api.delete(`/admin/users/${user.id}`); onRefresh(); }}>Delete</button>
+          </div>
         ])}
         empty="No users yet."
       />
